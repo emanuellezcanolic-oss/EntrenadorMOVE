@@ -1144,6 +1144,23 @@ function loadAtlData(){
   r.innerHTML=`<strong>${a.nombre}</strong> · ${a.dep} · ${a.nivel}<br>Edad: ${edad(a.fnac)} · Peso: ${a.peso||"—"}kg · Alt: ${a.altura||"—"}cm<br>${a.vamK?`VAM: <strong style="color:var(--grl)">${a.vamK} km/h</strong> · `:""}${a.ftp?`FTP: <strong style="color:var(--grl)">${a.ftp}W</strong> · `:""}<br>Lesiones: ${a.lesiones||"Ninguna"}<br>Tests: ${(a.tests||[]).map(t=>t.type+": "+t.result).join(" | ")||"Sin tests"}`;
 }
 
+// Biblioteca de metodología basada en la literatura (citando autores/libros).
+// No reproduce texto de los libros; resume principios para fundamentar los planes.
+const RUN_LIB=`BIBLIOTECA RUNNING (fundamentá el plan en esto):
+- Daniels ("Daniels' Running Formula"): zonas por VDOT — E (fácil), M (maratón), T (umbral, ~20-40 min continuos o cruise intervals), I (intervalos VO2máx 3-5 min), R (repeticiones neuromusculares cortas). Mayoría del volumen en E.
+- Pfitzinger ("Advanced Marathoning"): tiradas largas con progresión, corridas de umbral (LT) continuas, construcción progresiva del volumen, recuperación entre calidades.
+- Seiler / Fitzgerald ("80/20 Running"): ~80% baja intensidad (Z1-Z2) y ~20% alta (Z4-Z5); lo fácil, realmente fácil.
+- Canova: bloques específicos de ritmo de competencia al acercarse el evento.
+- Magness ("Science of Running"): individualización y progresión conservadora de la carga.
+- Cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, core, pliometría ligera); descarga cada 3-4 semanas.`;
+const CIC_LIB=`BIBLIOTECA CICLISMO (fundamentá el plan en esto):
+- Allen & Coggan ("Training and Racing with a Power Meter"): FTP como ancla; 7 zonas de potencia; carga por TSS/IF/NP; PMC → CTL (fitness, 42 d), ATL (fatiga, 7 d), TSB (frescura). Rampa de CTL segura ≤ ~5-8 TSS/semana.
+- Friel ("The Cyclist's Training Bible"): periodización Base → Construcción → Pico → Transición; descarga cada 3-4 semanas.
+- Seiler: distribución polarizada 80/20 (mayoría Z2; minoría Z4-Z5).
+- Rønnestad: intervalos de VO2máx (p.ej. 5×3 min o series 30/15) más efectivos que el continuo para elevar el VO2máx.
+- San Millán: volumen en Z2 para densidad mitocondrial y flexibilidad metabólica.
+- Sesiones clave: Sweet Spot (88-94% FTP), Umbral 2×20 min (95-105%), over-unders, VO2máx 5×3 min (110-120%), día de FONDO largo en Z2; cadencia 85-95 rpm; fuerza en gimnasio durante la base.`;
+
 async function generarPlan(modo){
   modo = modo||"nuevo";
   // Close lesion modal if open
@@ -1187,6 +1204,8 @@ async function generarPlan(modo){
   const posicion=isField?(document.getElementById("planPosicion")?.value||""):"";
   const temporada=isField?(document.getElementById("planTemporada")?.value||"pretemporada"):"";
   const fondoDia=isField?"N/A":(document.getElementById("planFondoDia")?.value||"Sábado");
+  const isTri=/tri|dua/i.test(dep_clean);
+  const libBlock=isField?"":(isTri?(RUN_LIB+"\n\n"+CIC_LIB):(isCicl?CIC_LIB:RUN_LIB));
 
   const systemPrompt = isField ? `Sos el preparador físico del club The Move Club (Argentina). Generás planes para DEPORTES DE CAMPO (fútbol, básquet, hockey, etc.). Solo el plan, sin introducciones.
 
@@ -1235,6 +1254,8 @@ REGLA: No inventás datos. Todo basado en ciencia validada.
 
 RESISTENCIA: Daniels (VDOT/zonas), Seiler (80/20 polarizado), Pfitzinger (volumen), Koop (trail), Friel (TSS/CTL), House-Johnston (Uphill Athlete), Gabbett (ACWR 0.8-1.3).
 PERIODIZACIÓN: Microciclos Ajuste→Control→Carga→Descarga (3:1). Z1=suave Z2=ligero Z3=algo duro Z4=duro Z5=máximo. Si no hay VAM/FTP: rangos por nivel, nunca inventar valores.
+
+${libBlock}
 
 ESTRUCTURA DE CADA SESIÓN:
 **Entrada en calor (10-15 min):** drills técnicos específicos + activación + rodaje suave

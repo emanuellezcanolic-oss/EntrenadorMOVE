@@ -1146,13 +1146,18 @@ function loadAtlData(){
 
 // Biblioteca de metodología basada en la literatura (citando autores/libros).
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
-const RUN_LIB=`BIBLIOTECA RUNNING (fundamentá el plan en esto):
-- Daniels ("Daniels' Running Formula"): zonas por VDOT — E (fácil), M (maratón), T (umbral, ~20-40 min continuos o cruise intervals), I (intervalos VO2máx 3-5 min), R (repeticiones neuromusculares cortas). Mayoría del volumen en E.
-- Pfitzinger ("Advanced Marathoning"): tiradas largas con progresión, corridas de umbral (LT) continuas, construcción progresiva del volumen, recuperación entre calidades.
-- Seiler / Fitzgerald ("80/20 Running"): ~80% baja intensidad (Z1-Z2) y ~20% alta (Z4-Z5); lo fácil, realmente fácil.
-- Canova: bloques específicos de ritmo de competencia al acercarse el evento.
-- Magness ("Science of Running"): individualización y progresión conservadora de la carga.
-- Cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, core, pliometría ligera); descarga cada 3-4 semanas.`;
+const RUN_LIB=`BIBLIOTECA RUNNING (fundamentá el plan en esto; citar autores):
+ZONAS E INTENSIDADES (Daniels, "Daniels' Running Formula", sistema VDOT): cada sesión con un propósito claro.
+- E (fácil, ~65-79% FCmáx): base aeróbica, capilarización, corazón; ritmo conversacional; la mayoría del volumen.
+- M (ritmo de maratón).
+- T (umbral, "cómodamente duro", ~ritmo sostenible 1 h): eleva el umbral de lactato; tempo continuo 20-40 min o cruise intervals con pausa corta.
+- I (intervalos, ~95-100% VO2máx): repeticiones de 3-5 min; sube el VO2máx.
+- R (repeticiones, más rápido que ritmo de 1500-3000 m): repes cortas con recuperación completa; velocidad y economía de carrera.
+Fijar ritmos con el VDOT del atleta; si no hay dato, usar rangos por nivel, nunca inventar valores.
+MARATÓN (Pfitzinger & Douglas, "Advanced Marathoning"): mesociclos resistencia base → umbral+resistencia → específico de carrera → afinamiento (taper). Tipos de sesión: recuperación, aeróbico general, medio-largo, tirada larga, umbral (LT/tempo), VO2máx, ritmo de maratón y carreras de preparación (tune-up). Construcción progresiva del volumen y recuperación entre sesiones de calidad.
+ULTRA / TRAIL (Koop, "Training Essentials for Ultrarunning"): la intensidad bien dosificada pesa más que solo acumular kilómetros; entrenar con especificidad al terreno de la carrera (desnivel positivo/vertical y tipo de superficie); periodización hacia el evento; ensayar la estrategia de alimentación e hidratación y hacer "gut training" (entrenar el intestino), porque en ultra la nutrición decide la carrera.
+DISTRIBUCIÓN (Seiler / Fitzgerald, "80/20 Running"): ~80% del tiempo en baja intensidad (E) y ~20% en alta (T/I/R); lo fácil, realmente fácil.
+PERIODIZACIÓN Y CARGA: de lo general a lo específico; microciclos con descarga periódica; cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, core, pliometría ligera); progresión conservadora del volumen (~≤10%/sem) y respetar el ACWR 0.8-1.3 (Gabbett).`;
 const CIC_LIB=`BIBLIOTECA CICLISMO (fundamentá el plan en esto; citar autores):
 FUNDAMENTO (Allen & Coggan, "Training and Racing with a Power Meter"): FTP como ancla; 7 zonas de potencia; carga por TSS/IF/NP; PMC → CTL (fitness, 42 d), ATL (fatiga, 7 d), TSB (frescura). Rampa de CTL segura ≤ ~5-8 TSS/semana.
 INTENSIDAD (Friel, "Manual de entrenamiento del ciclista", 4ª ed): la intensidad es el factor decisivo, no solo el volumen. Construir primero una base aeróbica amplia (modelo pirámide) antes de la alta intensidad. Medir con potencia (ideal), FC o RPE de Borg; el umbral funcional (FTP/UL) es la referencia central.

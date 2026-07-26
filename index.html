@@ -1153,13 +1153,14 @@ const RUN_LIB=`BIBLIOTECA RUNNING (fundamentá el plan en esto):
 - Canova: bloques específicos de ritmo de competencia al acercarse el evento.
 - Magness ("Science of Running"): individualización y progresión conservadora de la carga.
 - Cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, core, pliometría ligera); descarga cada 3-4 semanas.`;
-const CIC_LIB=`BIBLIOTECA CICLISMO (fundamentá el plan en esto):
-- Allen & Coggan ("Training and Racing with a Power Meter"): FTP como ancla; 7 zonas de potencia; carga por TSS/IF/NP; PMC → CTL (fitness, 42 d), ATL (fatiga, 7 d), TSB (frescura). Rampa de CTL segura ≤ ~5-8 TSS/semana.
-- Friel ("The Cyclist's Training Bible"): periodización Base → Construcción → Pico → Transición; descarga cada 3-4 semanas.
-- Seiler: distribución polarizada 80/20 (mayoría Z2; minoría Z4-Z5).
-- Rønnestad: intervalos de VO2máx (p.ej. 5×3 min o series 30/15) más efectivos que el continuo para elevar el VO2máx.
-- San Millán: volumen en Z2 para densidad mitocondrial y flexibilidad metabólica.
-- Sesiones clave: Sweet Spot (88-94% FTP), Umbral 2×20 min (95-105%), over-unders, VO2máx 5×3 min (110-120%), día de FONDO largo en Z2; cadencia 85-95 rpm; fuerza en gimnasio durante la base.`;
+const CIC_LIB=`BIBLIOTECA CICLISMO (fundamentá el plan en esto; citar autores):
+FUNDAMENTO (Allen & Coggan, "Training and Racing with a Power Meter"): FTP como ancla; 7 zonas de potencia; carga por TSS/IF/NP; PMC → CTL (fitness, 42 d), ATL (fatiga, 7 d), TSB (frescura). Rampa de CTL segura ≤ ~5-8 TSS/semana.
+INTENSIDAD (Friel, "Manual de entrenamiento del ciclista", 4ª ed): la intensidad es el factor decisivo, no solo el volumen. Construir primero una base aeróbica amplia (modelo pirámide) antes de la alta intensidad. Medir con potencia (ideal), FC o RPE de Borg; el umbral funcional (FTP/UL) es la referencia central.
+PERIODIZACIÓN (Friel): períodos Preparación → Base → Fortalecimiento → Máximo → Carrera → Transición. De lo general a lo específico: volumen alto e intensidad baja al inicio; luego baja el volumen y sube la intensidad y la especificidad. Semana de descarga/recuperación cada 4ª semana (cada 3ª en mayores de 40) en Base y Fortalecimiento: NO saltarla. Apuntar a 2-3 picos de forma por año, no forma constante todo el año.
+CAPACIDADES (Friel): resistencia aeróbica (casi todo el año), fuerza (gimnasio), vigor/fuerza en bici (subidas, marchas largas), habilidades de velocidad (cadencia y técnica de pedaleo), resistencia muscular (tipo contrarreloj, clave), resistencia anaeróbica (VO2máx) y potencia (sprints).
+FUERZA — fases (Friel): AA (adaptación anatómica: muchas reps, carga leve) en Preparación → FM (fuerza máxima: cargas altas, pocas reps) en Base 1 → MF (mantenimiento) el resto de la temporada; sin pesas la semana de una carrera prioritaria. Importante sobre todo en mujeres y mayores de 40.
+SESIONES CLAVE (potencia): Z2 fondo largo (base metabólica y mitocondrial, San Millán); Sweet Spot 88-94% FTP; Umbral 2×20 min 95-105%; over-unders; VO2máx 5×3 min 110-120% o series 30/15 (Rønnestad). Cadencia 85-95 rpm. Distribución polarizada ~80/20 (Seiler): mayoría en Z2, minoría en Z4-Z5.
+TEST (Friel): reevaluar FTP/potencia crítica cada 4-6 semanas para reajustar zonas y carga.`;
 
 async function generarPlan(modo){
   modo = modo||"nuevo";

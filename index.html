@@ -287,6 +287,7 @@ tr:hover td{background:var(--s2)}
       <div class="nitem" onclick="gotoPage('generar')"><span class="nico">⚡</span>Generar Plan</div>
       <div class="nitem" onclick="gotoPage('carga')"><span class="nico">📈</span>Control de Carga</div>
       <div class="slabel">Config</div>
+      <div class="nitem" onclick="abrirConfigKey()"><span class="nico">⚙️</span>API Key IA</div>
       <div class="nitem" onclick="exportarDB()" style="color:var(--grl)"><span class="nico">⬇️</span>Exportar DB</div>
       <div class="nitem" onclick="importarDB()" style="color:#3498db"><span class="nico">⬆️</span>Importar DB</div>
       <div class="nitem kb-access" style="display:none" onclick="gotoPage('kb')"><span class="nico">📚</span>Base de Conocimiento</div>
@@ -727,6 +728,32 @@ tr:hover td{background:var(--s2)}
 </div>
 
 <!-- MODAL LESION -->
+<!-- MODAL API KEY IA -->
+<div class="mo hidden" id="moKey">
+  <div class="modal" style="max-width:520px">
+    <div class="mh"><div class="mti">⚙️ API KEY DE IA (GROQ)</div><button class="mclose" onclick="closeM('moKey')">✕</button></div>
+    <div class="mb">
+      <div id="keyMsg" style="display:none;font-size:12px;line-height:1.5;padding:9px 11px;border-radius:6px;margin-bottom:13px"></div>
+      <div style="font-size:12px;color:var(--tx2);line-height:1.65;margin-bottom:15px">
+        La app usa <strong>Groq</strong> para generar los planes con IA. La key se guarda <strong>solo en este navegador</strong>: no viaja al repositorio ni a ningún otro servidor.<br>
+        La conseguís gratis en <a href="https://console.groq.com/keys" target="_blank" rel="noopener" style="color:var(--grl)">console.groq.com/keys</a>.
+      </div>
+      <div class="fg"><div class="fl">API Key</div>
+        <input class="fc" id="keyInput" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_...">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);margin-top:7px;cursor:pointer">
+          <input type="checkbox" id="keyShow" onchange="document.getElementById('keyInput').type=this.checked?'text':'password'"> Mostrar key
+        </label>
+      </div>
+      <div id="keyState" style="font-size:11px;color:var(--tx2)"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="borrarGroqKey()">Borrar</button>
+      <button class="btn btn-s" onclick="probarGroqKey()">Probar conexión</button>
+      <button class="btn" onclick="guardarGroqKey()">GUARDAR</button>
+    </div>
+  </div>
+</div>
+
 <div class="mo hidden" id="moLesion">
   <div class="modal" style="max-width:420px">
     <div class="mh"><div class="mti">AJUSTAR POR LESIÓN / DOLOR</div><button class="mclose" onclick="closeM('moLesion')">✕</button></div>
@@ -1362,17 +1389,17 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
 
   showLoading("Generando con IA científica... ⚡");
   try{
-    let GROQ_KEY=localStorage.getItem("tmc_groq_key")||"";
+    const GROQ_KEY=getGroqKey();
     if(!GROQ_KEY){
-      GROQ_KEY=(prompt("Ingresá tu API Key de Groq.\n\nSe guarda solo en este navegador (nunca en el código).\nLa obtenés gratis en console.groq.com → API Keys")||"").trim();
-      if(!GROQ_KEY){hideLoading();notify("Necesitás una API Key de Groq para generar planes con IA","err");return;}
-      localStorage.setItem("tmc_groq_key",GROQ_KEY);
+      hideLoading();
+      abrirConfigKey("Para generar planes con IA necesitás cargar tu API Key de Groq. Es gratis y se guarda solo en este navegador.","info");
+      return;
     }
-    const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{
+    const res=await fetch(GROQ_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+GROQ_KEY},
       body:JSON.stringify({
-        model:"llama-3.3-70b-versatile",
+        model:GROQ_MODEL,
         max_tokens:3200,
         temperature:0.3,
         messages:[
@@ -1383,8 +1410,9 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     });
     hideLoading();
     if(!res.ok){
-      const e=await res.json().catch(()=>({}));
-      throw new Error(e?.error?.message||"Error "+res.status);
+      const msg=await groqErrorMsg(res);
+      if(res.status===401){clearGroqKey();abrirConfigKey(msg,"err");}
+      throw new Error(msg);
     }
     const data=await res.json();
     const txt=data.choices?.[0]?.message?.content||"No se pudo generar el plan.";
@@ -1395,6 +1423,83 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     hideLoading();
     notify("Error: "+err.message,"err");
     console.error(err);
+  }
+}
+
+/* ===================== API KEY DE IA (GROQ) =====================
+   La key se guarda únicamente en localStorage de este navegador.
+   Nunca se escribe en el código fuente: este repo es público y una key
+   embebida quedaría expuesta (y Groq la revocaría automáticamente).      */
+const GROQ_URL="https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL="llama-3.3-70b-versatile";
+const GROQ_KEY_LS="tmc_groq_key";
+
+function getGroqKey(){try{return(localStorage.getItem(GROQ_KEY_LS)||"").trim()}catch{return""}}
+function setGroqKey(k){try{localStorage.setItem(GROQ_KEY_LS,k.trim())}catch{}}
+function clearGroqKey(){try{localStorage.removeItem(GROQ_KEY_LS)}catch{}}
+function maskKey(k){return k.length<=12?"••••••":k.slice(0,6)+"•".repeat(8)+k.slice(-4)}
+function validKeyShape(k){return /^gsk_[A-Za-z0-9]{20,}$/.test(k)}
+
+function keyMsg(msg,tipo){
+  const el=document.getElementById("keyMsg");if(!el)return;
+  if(!msg){el.style.display="none";el.textContent="";return}
+  const c=tipo==="err"?["rgba(231,76,60,.12)","#e74c3c"]:tipo==="ok"?["rgba(46,204,113,.12)","#2ecc71"]:["rgba(52,152,219,.12)","#3498db"];
+  el.style.display="block";el.style.background=c[0];el.style.border="1px solid "+c[1];el.style.color="var(--tx)";
+  el.textContent=msg;
+}
+function refreshKeyState(){
+  const k=getGroqKey();
+  const el=document.getElementById("keyState");
+  if(el)el.textContent=k?"Key configurada en este navegador: "+maskKey(k):"Todavía no hay ninguna key configurada.";
+}
+function abrirConfigKey(msg,tipo){
+  const k=getGroqKey();
+  const inp=document.getElementById("keyInput");
+  if(inp){inp.value=k;inp.type="password"}
+  const chk=document.getElementById("keyShow");if(chk)chk.checked=false;
+  refreshKeyState();
+  keyMsg(typeof msg==="string"?msg:"",tipo);
+  document.getElementById("moKey").classList.remove("hidden");
+}
+function guardarGroqKey(){
+  const k=(document.getElementById("keyInput").value||"").trim();
+  if(!k){keyMsg("Pegá una API Key antes de guardar.","err");return}
+  if(!validKeyShape(k)){keyMsg("Esa key no tiene el formato de Groq: empieza con gsk_ seguido de letras y números. Fijate que la hayas copiado completa y sin espacios.","err");return}
+  setGroqKey(k);refreshKeyState();
+  keyMsg("Key guardada. Tocá «Probar conexión» para confirmar que funciona.","ok");
+  notify("API Key guardada en este navegador","ok");
+}
+function borrarGroqKey(){
+  clearGroqKey();
+  const inp=document.getElementById("keyInput");if(inp)inp.value="";
+  refreshKeyState();
+  keyMsg("Key borrada de este navegador.","info");
+}
+async function groqErrorMsg(res){
+  let d={};try{d=await res.json()}catch{}
+  const m=d&&d.error&&d.error.message?d.error.message:"";
+  if(res.status===401)return "API Key inválida o revocada (401). Generá una nueva en console.groq.com/keys y pegala acá.";
+  if(res.status===403)return "La key no tiene permisos para este modelo (403). "+m;
+  if(res.status===404)return "El modelo "+GROQ_MODEL+" no está disponible en tu cuenta (404). "+m;
+  if(res.status===413||res.status===422)return "El pedido es demasiado largo para el modelo. Acortá las notas del atleta. "+m;
+  if(res.status===429)return "Alcanzaste el límite de uso de Groq (429). Esperá unos minutos y reintentá. "+m;
+  if(res.status>=500)return "Groq está con problemas en este momento ("+res.status+"). Reintentá en unos minutos.";
+  return m||("Error "+res.status);
+}
+async function probarGroqKey(){
+  const k=((document.getElementById("keyInput").value||"").trim())||getGroqKey();
+  if(!k){keyMsg("Pegá una API Key para poder probarla.","err");return}
+  keyMsg("Probando conexión con Groq...","info");
+  try{
+    const res=await fetch(GROQ_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
+      body:JSON.stringify({model:GROQ_MODEL,max_tokens:5,messages:[{role:"user",content:"ping"}]})
+    });
+    if(res.ok){setGroqKey(k);refreshKeyState();keyMsg("✅ Conexión OK: la key funciona y quedó guardada.","ok");return}
+    keyMsg("❌ "+(await groqErrorMsg(res)),"err");
+  }catch(e){
+    keyMsg("❌ No se pudo conectar con Groq. Revisá tu conexión a internet. ("+e.message+")","err");
   }
 }
 

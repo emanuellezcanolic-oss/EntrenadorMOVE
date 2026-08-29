@@ -744,10 +744,17 @@ tr:hover td{background:var(--s2)}
           <input type="checkbox" id="keyShow" onchange="document.getElementById('keyInput').type=this.checked?'text':'password'"> Mostrar key
         </label>
       </div>
+      <div class="fg"><div class="fl">Modelo de IA</div>
+        <select class="fc" id="keyModel"><option value="">— tocá «Cargar modelos» para ver los de tu cuenta —</option></select>
+        <div style="font-size:11px;color:var(--tx2);margin-top:6px;line-height:1.5">
+          Groq da de baja modelos viejos cada tanto. Si te aparece un error 404, cargá la lista y elegí uno vigente.
+        </div>
+      </div>
       <div id="keyState" style="font-size:11px;color:var(--tx2)"></div>
     </div>
     <div class="mf">
       <button class="btn btn-s" onclick="borrarGroqKey()">Borrar</button>
+      <button class="btn btn-s" onclick="cargarModelosGroq()">Cargar modelos</button>
       <button class="btn btn-s" onclick="probarGroqKey()">Probar conexión</button>
       <button class="btn" onclick="guardarGroqKey()">GUARDAR</button>
     </div>
@@ -1399,7 +1406,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+GROQ_KEY},
       body:JSON.stringify({
-        model:GROQ_MODEL,
+        model:getGroqModel(),
         max_tokens:3200,
         temperature:0.3,
         messages:[
@@ -1412,6 +1419,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     if(!res.ok){
       const msg=await groqErrorMsg(res);
       if(res.status===401){clearGroqKey();abrirConfigKey(msg,"err");}
+      else if(res.status===404){abrirConfigKey(msg,"err");cargarModelosGroq(false);}
       throw new Error(msg);
     }
     const data=await res.json();
@@ -1431,8 +1439,23 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
    Nunca se escribe en el código fuente: este repo es público y una key
    embebida quedaría expuesta (y Groq la revocaría automáticamente).      */
 const GROQ_URL="https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL="llama-3.3-70b-versatile";
+const GROQ_MODELS_URL="https://api.groq.com/openai/v1/models";
 const GROQ_KEY_LS="tmc_groq_key";
+const GROQ_MODEL_LS="tmc_groq_model";
+/* Groq da de baja modelos cada tanto, así que el modelo NO está fijo en el
+   código: se descubre pidiéndole la lista a la cuenta. Este orden marca la
+   preferencia (más capaz primero) entre los que estén realmente disponibles. */
+const GROQ_MODEL_PREF=["llama-3.3-70b-versatile","llama-3.1-70b-versatile","moonshotai/kimi-k2-instruct-0905","moonshotai/kimi-k2-instruct","openai/gpt-oss-120b","meta-llama/llama-4-maverick-17b-128e-instruct","deepseek-r1-distill-llama-70b","qwen/qwen3-32b","meta-llama/llama-4-scout-17b-16e-instruct","openai/gpt-oss-20b","llama-3.1-8b-instant","gemma2-9b-it"];
+/* modelos que no sirven para generar texto (audio, imagen, moderación) */
+const GROQ_MODEL_EXCLUDE=/whisper|tts|guard|embed|playai|moderation|safety|prompt-?guard/i;
+const GROQ_MODEL_FALLBACK="llama-3.3-70b-versatile";
+
+function getGroqModel(){try{return(localStorage.getItem(GROQ_MODEL_LS)||"").trim()||GROQ_MODEL_FALLBACK}catch{return GROQ_MODEL_FALLBACK}}
+function setGroqModel(m){try{localStorage.setItem(GROQ_MODEL_LS,m)}catch{}}
+function elegirModelo(ids){
+  for(const pref of GROQ_MODEL_PREF)if(ids.includes(pref))return pref;
+  return ids[0]||"";
+}
 
 function getGroqKey(){try{return(localStorage.getItem(GROQ_KEY_LS)||"").trim()}catch{return""}}
 function setGroqKey(k){try{localStorage.setItem(GROQ_KEY_LS,k.trim())}catch{}}
@@ -1450,22 +1473,61 @@ function keyMsg(msg,tipo){
 function refreshKeyState(){
   const k=getGroqKey();
   const el=document.getElementById("keyState");
-  if(el)el.textContent=k?"Key configurada en este navegador: "+maskKey(k):"Todavía no hay ninguna key configurada.";
+  if(el)el.textContent=(k?"Key configurada en este navegador: "+maskKey(k):"Todavía no hay ninguna key configurada.")+" · Modelo: "+getGroqModel();
+}
+/* Deja el <select> con los modelos dados y marca el que corresponda */
+function pintarModelos(ids,sel){
+  const s=document.getElementById("keyModel");if(!s)return;
+  s.innerHTML="";
+  if(!ids.length){s.innerHTML='<option value="">— sin modelos disponibles —</option>';return}
+  ids.forEach(id=>{const o=document.createElement("option");o.value=id;o.textContent=id;s.appendChild(o)});
+  s.value=ids.includes(sel)?sel:elegirModelo(ids);
+}
+/* Le pregunta a Groq qué modelos tiene habilitados esta cuenta */
+async function cargarModelosGroq(silencioso){
+  const k=((document.getElementById("keyInput").value||"").trim())||getGroqKey();
+  if(!k){if(!silencioso)keyMsg("Pegá una API Key antes de cargar los modelos.","err");return null}
+  if(!silencioso)keyMsg("Buscando los modelos disponibles en tu cuenta...","info");
+  try{
+    const res=await fetch(GROQ_MODELS_URL,{headers:{"Authorization":"Bearer "+k}});
+    if(!res.ok){const em=await groqErrorMsg(res);if(!silencioso)keyMsg("❌ "+em,"err");return null}
+    const d=await res.json();
+    const ids=(d.data||[]).map(m=>m.id).filter(id=>id&&!GROQ_MODEL_EXCLUDE.test(id)).sort();
+    if(!ids.length){if(!silencioso)keyMsg("Tu cuenta no tiene ningún modelo de texto habilitado.","err");return null}
+    const actual=getGroqModel();
+    pintarModelos(ids,actual);
+    if(!ids.includes(actual)){
+      const nuevo=elegirModelo(ids);
+      setGroqModel(nuevo);refreshKeyState();
+      if(!silencioso)keyMsg("El modelo "+actual+" ya no existe en Groq. Lo cambié por "+nuevo+". Tocá «Probar conexión» para confirmar.","ok");
+    }else if(!silencioso){
+      keyMsg("Listo: "+ids.length+" modelos disponibles. El actual ("+actual+") sigue vigente.","ok");
+    }
+    return ids;
+  }catch(e){
+    if(!silencioso)keyMsg("❌ No se pudo conectar con Groq. Revisá tu conexión a internet. ("+e.message+")","err");
+    return null;
+  }
 }
 function abrirConfigKey(msg,tipo){
   const k=getGroqKey();
   const inp=document.getElementById("keyInput");
   if(inp){inp.value=k;inp.type="password"}
   const chk=document.getElementById("keyShow");if(chk)chk.checked=false;
+  pintarModelos([getGroqModel()],getGroqModel());
   refreshKeyState();
   keyMsg(typeof msg==="string"?msg:"",tipo);
   document.getElementById("moKey").classList.remove("hidden");
+  if(getGroqKey())cargarModelosGroq(true);
 }
 function guardarGroqKey(){
   const k=(document.getElementById("keyInput").value||"").trim();
   if(!k){keyMsg("Pegá una API Key antes de guardar.","err");return}
   if(!validKeyShape(k)){keyMsg("Esa key no tiene el formato de Groq: empieza con gsk_ seguido de letras y números. Fijate que la hayas copiado completa y sin espacios.","err");return}
-  setGroqKey(k);refreshKeyState();
+  setGroqKey(k);
+  const m=(document.getElementById("keyModel")||{}).value;
+  if(m)setGroqModel(m);
+  refreshKeyState();
   keyMsg("Key guardada. Tocá «Probar conexión» para confirmar que funciona.","ok");
   notify("API Key guardada en este navegador","ok");
 }
@@ -1480,7 +1542,7 @@ async function groqErrorMsg(res){
   const m=d&&d.error&&d.error.message?d.error.message:"";
   if(res.status===401)return "API Key inválida o revocada (401). Generá una nueva en console.groq.com/keys y pegala acá.";
   if(res.status===403)return "La key no tiene permisos para este modelo (403). "+m;
-  if(res.status===404)return "El modelo "+GROQ_MODEL+" no está disponible en tu cuenta (404). "+m;
+  if(res.status===404)return "El modelo "+getGroqModel()+" no está disponible en tu cuenta (404). Abrí ⚙️ API Key IA, tocá «Cargar modelos» y elegí uno vigente. "+m;
   if(res.status===413||res.status===422)return "El pedido es demasiado largo para el modelo. Acortá las notas del atleta. "+m;
   if(res.status===429)return "Alcanzaste el límite de uso de Groq (429). Esperá unos minutos y reintentá. "+m;
   if(res.status>=500)return "Groq está con problemas en este momento ("+res.status+"). Reintentá en unos minutos.";
@@ -1490,13 +1552,34 @@ async function probarGroqKey(){
   const k=((document.getElementById("keyInput").value||"").trim())||getGroqKey();
   if(!k){keyMsg("Pegá una API Key para poder probarla.","err");return}
   keyMsg("Probando conexión con Groq...","info");
+  const sel=document.getElementById("keyModel");
+  let mdl=(sel&&sel.value)||getGroqModel();
   try{
-    const res=await fetch(GROQ_URL,{
+    let res=await fetch(GROQ_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
-      body:JSON.stringify({model:GROQ_MODEL,max_tokens:5,messages:[{role:"user",content:"ping"}]})
+      body:JSON.stringify({model:mdl,max_tokens:5,messages:[{role:"user",content:"ping"}]})
     });
-    if(res.ok){setGroqKey(k);refreshKeyState();keyMsg("✅ Conexión OK: la key funciona y quedó guardada.","ok");return}
+    // si el modelo fue dado de baja, buscamos uno vigente y reintentamos una vez
+    if(res.status===404){
+      setGroqKey(k);
+      const ids=await cargarModelosGroq(true);
+      const alt=ids?elegirModelo(ids):"";
+      if(!alt||alt===mdl){keyMsg("❌ "+(await groqErrorMsg(res)),"err");return}
+      mdl=alt;
+      res=await fetch(GROQ_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
+        body:JSON.stringify({model:mdl,max_tokens:5,messages:[{role:"user",content:"ping"}]})
+      });
+    }
+    if(res.ok){
+      setGroqKey(k);setGroqModel(mdl);
+      if(sel)sel.value=mdl;
+      refreshKeyState();
+      keyMsg("✅ Conexión OK con "+mdl+". La key y el modelo quedaron guardados.","ok");
+      return;
+    }
     keyMsg("❌ "+(await groqErrorMsg(res)),"err");
   }catch(e){
     keyMsg("❌ No se pudo conectar con Groq. Revisá tu conexión a internet. ("+e.message+")","err");

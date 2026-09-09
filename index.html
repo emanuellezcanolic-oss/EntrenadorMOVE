@@ -1201,6 +1201,58 @@ FUERZA — fases (Friel): AA (adaptación anatómica: muchas reps, carga leve) e
 SESIONES CLAVE (potencia): Z2 fondo largo (base metabólica y mitocondrial, San Millán); Sweet Spot 88-94% FTP; Umbral 2×20 min 95-105%; over-unders; VO2máx 5×3 min 110-120% o series 30/15 (Rønnestad). Cadencia 85-95 rpm. Distribución polarizada ~80/20 (Seiler): mayoría en Z2, minoría en Z4-Z5.
 TEST (Friel): reevaluar FTP/potencia crítica cada 4-6 semanas para reajustar zonas y carga.`;
 
+/* Regla que impide que el modelo abrevie las semanas 2 en adelante. */
+const REGLA_COMPLETITUD=`
+⚠️ REGLA DE COMPLETITUD — ES LA REGLA MÁS IMPORTANTE DE TODAS:
+1. TODAS las semanas se escriben con EXACTAMENTE el mismo nivel de detalle que la Semana 1. La última semana se escribe tan completa como la primera.
+2. PROHIBIDO resumir, comprimir o abreviar las semanas 2 en adelante.
+3. PROHIBIDO escribir una sesión en una sola línea del tipo "LUNES – Rodaje fácil 50 min, 16 km, RPE 2". Eso es un error grave: esa sesión tiene que ocupar sus 4 bloques igual que en la Semana 1.
+4. PROHIBIDO escribir "ídem", "igual que la semana anterior", "misma estructura", "se repite", "como en la Semana 1", "análogo" o cualquier referencia cruzada para no escribir una sesión.
+5. CADA sesión de CADA semana lleva SIEMPRE sus 4 bloques escritos y completos:
+   **Entrada en calor:** duración + drills concretos
+   **Parte principal:** series × distancia/tiempo + intensidad (zona/RPE/%) + pausa + foco técnico
+   **Vuelta a la calma:** afloje + estiramientos concretos
+   **Carga:** volumen | RPE | Zona
+6. Si el texto se está por cortar por longitud, NO abrevies para que entre: cortá donde estés y seguí en el mensaje siguiente, que se te va a pedir continuar.
+`;
+
+/* ── Generación larga con continuación automática ──────────────────────────
+   Un plan de 12 semanas con TODAS las sesiones detalladas son ~20.000 tokens,
+   muy por encima de lo que entra en una sola respuesta. Por eso, si el modelo
+   corta por límite de longitud (finish_reason "length"), se le pide que siga
+   exactamente donde quedó y se van pegando los pedazos.                      */
+const GROQ_MAX_TOKENS=8000;
+const GROQ_MAX_CONT=8;
+const CONTINUAR_MSG="Continuá EXACTAMENTE donde cortaste, sin repetir nada de lo ya escrito, sin resumir y sin volver a hacer una introducción. Mantené el mismo nivel de detalle en cada sesión (Entrada en calor / Parte principal / Vuelta a la calma / Carga). Si estabas a mitad de una sesión, terminala.";
+
+function contarSemanas(t){return (String(t).match(/^\s*#{1,3}\s*SEMANA\s*\d+/gim)||[]).length}
+
+async function groqChat(messages,onProgress){
+  const key=getGroqKey();
+  let msgs=messages.slice(), full="";
+  for(let i=0;i<=GROQ_MAX_CONT;i++){
+    const res=await fetch(GROQ_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({model:getGroqModel(),max_tokens:GROQ_MAX_TOKENS,temperature:0.3,messages:msgs})
+    });
+    if(!res.ok){
+      const err=new Error(await groqErrorMsg(res));
+      err.status=res.status;err.parcial=full;
+      throw err;
+    }
+    const data=await res.json();
+    const ch=(data.choices&&data.choices[0])||{};
+    const parte=(ch.message&&ch.message.content)||"";
+    full+=parte;
+    if(onProgress)onProgress(full,i);
+    if(ch.finish_reason!=="length")break;      // el modelo terminó por su cuenta
+    if(i===GROQ_MAX_CONT)break;                // tope de reintentos
+    msgs=msgs.concat([{role:"assistant",content:parte},{role:"user",content:CONTINUAR_MSG}]);
+  }
+  return full;
+}
+
 async function generarPlan(modo){
   modo = modo||"nuevo";
   // Close lesion modal if open
@@ -1287,7 +1339,8 @@ FORMATO:
 **Vuelta a la calma:** [trote suave + estiramientos]
 **Carga:** X min | **RPE:** X/10
 [Días libres: DESCANSO ACTIVO o recuperación post-partido]
-Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR` 
+Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
+${REGLA_COMPLETITUD}` 
 
 : `Sos el Head Coach de The Move Club (Argentina). Solo el plan, sin introducciones.
 REGLA: No inventás datos. Todo basado en ciencia validada.
@@ -1310,7 +1363,8 @@ FORMATO: texto por sesión, SIN tablas.
 ### [DÍA — tipo sesión]
 [Entrada en calor / Parte principal / Vuelta a la calma / Carga]
 [Días libres: DESCANSO ACTIVO — movilidad 15 min]
-Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR`;
+Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR
+${REGLA_COMPLETITUD}`;
 
     // ── USER PROMPT BY MODE ──
   let userPrompt="";
@@ -1340,6 +1394,9 @@ Por cada día de entrenamiento:
 **Vuelta a la calma:** trote suave 5-8 min + estiramientos musculatura específica
 **Carga:** X min | RPE: X/10
 
+CANTIDAD EXACTA A ESCRIBIR: ${sem} semanas × ${dias} días = ${(+sem)*(+dias)} sesiones, TODAS desarrolladas por completo.
+Escribí las ${sem} semanas numeradas de "## SEMANA 1" a "## SEMANA ${sem}", sin saltear ninguna.
+${REGLA_COMPLETITUD}
 Terminá con ## DISTRIBUCIÓN ENERGÉTICA y ## PROGRESIÓN ACWR.`
     : `[NUEVO PLAN DE ENTRENAMIENTO PERSONALIZADO]
 ${atlInfo}
@@ -1351,6 +1408,10 @@ Generá el plan completo semana a semana. Microciclos: Ajuste (sem 1-2) → Cont
 
 IMPORTANTE: NO uses tablas. Formato texto por sesión. Cada sesión: Entrada en calor / Parte principal / Vuelta a la calma / Carga + RPE.
 El fondo largo va siempre el ${fondoDia} y es la sesión de mayor volumen de la semana.
+
+CANTIDAD EXACTA A ESCRIBIR: ${sem} semanas × ${dias} días = ${(+sem)*(+dias)} sesiones de entrenamiento, TODAS desarrolladas por completo.
+Escribí las ${sem} semanas numeradas de "## SEMANA 1" a "## SEMANA ${sem}", sin saltear ninguna.
+${REGLA_COMPLETITUD}
 Terminá con Zonas Personalizadas y Progresión de Cargas.`;
 
     userPrompt = isField
@@ -1402,34 +1463,34 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       abrirConfigKey("Para generar planes con IA necesitás cargar tu API Key de Groq. Es gratis y se guarda solo en este navegador.","info");
       return;
     }
-    const res=await fetch(GROQ_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json","Authorization":"Bearer "+GROQ_KEY},
-      body:JSON.stringify({
-        model:getGroqModel(),
-        max_tokens:3200,
-        temperature:0.3,
-        messages:[
-          {role:"system",content:systemPrompt},
-          {role:"user",content:userPrompt}
-        ]
-      })
-    });
+    const semN=parseInt(sem,10)||0;
+    const txt=await groqChat(
+      [{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],
+      acc=>{
+        const n=contarSemanas(acc);
+        showLoading(n&&semN?`Escribiendo el plan... semana ${n} de ${semN} ⚡`:"Generando con IA científica... ⚡");
+      }
+    );
     hideLoading();
-    if(!res.ok){
-      const msg=await groqErrorMsg(res);
-      if(res.status===401){clearGroqKey();abrirConfigKey(msg,"err");}
-      else if(res.status===404){abrirConfigKey(msg,"err");cargarModelosGroq(false);}
-      throw new Error(msg);
-    }
-    const data=await res.json();
-    const txt=data.choices?.[0]?.message?.content||"No se pudo generar el plan.";
+    if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
     const html=mdToHtml(txt);
     renderPlanOut(txt,html,a,dep,obj);
     if(aid)savePlanToAtl(aid,txt,html,dep,obj);
+    const n=contarSemanas(txt);
+    if(semN&&n&&n<semN)notify(`El plan salió con ${n} de ${semN} semanas. Generalo en tramos más cortos o reintentá.`,"err");
   }catch(err){
     hideLoading();
-    notify("Error: "+err.message,"err");
+    if(err.status===401){clearGroqKey();abrirConfigKey(err.message,"err");}
+    else if(err.status===404){abrirConfigKey(err.message,"err");cargarModelosGroq(false);}
+    // si ya se había generado parte del plan, no la tiramos: la mostramos igual
+    if(err.parcial&&(contarSemanas(err.parcial)>0||err.parcial.trim().length>400)){
+      const html=mdToHtml(err.parcial);
+      renderPlanOut(err.parcial,html,a,dep,obj);
+      if(aid)savePlanToAtl(aid,err.parcial,html,dep,obj);
+      notify("Plan incompleto ("+contarSemanas(err.parcial)+" semanas): "+err.message,"err");
+    }else{
+      notify("Error: "+err.message,"err");
+    }
     console.error(err);
   }
 }

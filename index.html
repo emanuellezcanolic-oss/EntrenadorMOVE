@@ -1201,6 +1201,109 @@ FUERZA — fases (Friel): AA (adaptación anatómica: muchas reps, carga leve) e
 SESIONES CLAVE (potencia): Z2 fondo largo (base metabólica y mitocondrial, San Millán); Sweet Spot 88-94% FTP; Umbral 2×20 min 95-105%; over-unders; VO2máx 5×3 min 110-120% o series 30/15 (Rønnestad). Cadencia 85-95 rpm. Distribución polarizada ~80/20 (Seiler): mayoría en Z2, minoría en Z4-Z5.
 TEST (Friel): reevaluar FTP/potencia crítica cada 4-6 semanas para reajustar zonas y carga.`;
 
+/* Bibliotecas simplificadas para principiantes: las completas están llenas de
+   FTP/TSS/sweet-spot y esa jerga se filtraba al plan de un debutante. */
+const CIC_LIB_BASICO=`BIBLIOTECA CICLISMO — NIVEL INICIAL (fundamento para vos, el entrenador; NO copies esta jerga al plan):
+BASE AERÓBICA (Friel; San Millán): al principio casi todo el trabajo es suave y continuo. En alguien que empieza, lo que más rinde es sumar tiempo arriba de la bici de forma cómoda y constante, no hacer series duras.
+PROGRESIÓN SEGURA: subir el tiempo total no más de ~10% por semana; cada 3ª o 4ª semana bajar el volumen ~30% para asimilar. Nunca subir volumen y dificultad en la misma semana.
+INTENSIDAD (Seiler 80/20): la enorme mayoría del tiempo tiene que ser suave, de charla cómoda. Lo poco intenso se hace bien descansado.
+PRIMEROS PASOS: la prioridad es la constancia, la técnica básica (frenar, cambiar de marchas, tomar curvas, subir sentado) y la confianza en el terreno. La fuerza y la velocidad vienen después.
+CADENCIA: pedalear cómodo alrededor de 80-90 pedaladas por minuto, sin trancarse en marchas duras.`;
+
+const RUN_LIB_BASICO=`BIBLIOTECA RUNNING — NIVEL INICIAL (fundamento para vos, el entrenador; NO copies esta jerga al plan):
+BASE AERÓBICA (Daniels; Seiler 80/20): casi todo el trabajo es trote suave y conversado. En alguien que empieza, la constancia rinde más que la intensidad.
+PROGRESIÓN SEGURA: subir el tiempo total no más de ~10% por semana; cada 3ª o 4ª semana bajar ~30%. El salto de volumen es la causa más común de lesión en debutantes.
+MÉTODO TROTE-CAMINATA: en las primeras semanas alternar minutos de trote suave con minutos de caminata es lo más seguro y efectivo; ir alargando el trote y acortando la caminata.
+IMPACTO: correr sobre superficies blandas cuando se pueda, y no correr días seguidos hasta que la base esté armada.
+TÉCNICA: pasos cortos y frecuentes, hombros relajados, respiración cómoda.`;
+
+/* El plan se adapta al nivel del atleta: un principiante no debe recibir
+   vatios, FTP ni series máximas, y el volumen arranca mucho más abajo. */
+function bloqueNivel(nivel){
+  const n=String(nivel||"").toLowerCase();
+  if(n.indexOf("principiante")===0) return `
+🟢 NIVEL DEL ATLETA: PRINCIPIANTE — ESTO MANDA SOBRE CUALQUIER OTRA INDICACIÓN:
+
+LENGUAJE (lo lee alguien que recién arranca):
+- PROHIBIDO nombrar FTP, vatios, %FTP, TSS, IF, CTL, ATL, TSB, VO2máx, umbral, sweet spot, over-under, VAM, VDOT, zonas Z1-Z5 y %FCmax. Nada de eso aparece en el plan, ni siquiera para decir que no se dispone del dato.
+- La ÚNICA escala de esfuerzo es el RPE de 1 a 10, explicado en palabras: 1-3 muy suave (podrías cantar), 4-5 suave (charlás tranquilo), 6-7 exigente (hablás cortado), 8-10 muy fuerte (no podés hablar).
+- Escribí "esfuerzo suave / moderado / fuerte", nunca "Z2" ni "85% FCmax".
+- No incluyas tabla de zonas ni supuestos de frecuencia cardíaca máxima.
+
+CARGA (arrancá bajo en serio):
+- Máximo 3 días de entrenamiento por semana, aunque se pidan más: los días restantes son descanso o caminata suave y movilidad.
+- Sesiones de 30 a 50 minutos durante las primeras 4 semanas.
+- La salida larga arranca en 50-60 minutos y crece de a 10 minutos por semana como mucho.
+- El tiempo total semanal sube 10% por semana como máximo. Cada 4ª semana bajá el volumen ~30%.
+- En bici de montaña: el desnivel positivo arranca en 100-150 m por salida y progresa de a poco. NUNCA 300 m en la primera semana.
+- Las distancias van acordes: en montaña un principiante hace 8-12 km en una hora, no 20.
+
+INTENSIDAD (nada de esfuerzos máximos al principio):
+- Semanas 1 a 4: TODO entre RPE 2 y 6. PROHIBIDAS las series a RPE 8, 9 o 10, los piques máximos y las repeticiones al límite.
+- Recién desde la semana 5, y si el plan es largo, aparecen esfuerzos cortos hasta RPE 7.
+- CADA semana tiene al menos UNA sesión claramente fácil: corta, continua, sin series, para disfrutar y recuperar.
+
+SIMPLICIDAD (que se pueda ejecutar sin pensar):
+- Máximo 3 indicaciones por bloque. Nada de entradas en calor con 4 ejercicios distintos.
+- Entrada en calor: 10 minutos muy suave, y listo.
+- Parte principal: UNA sola consigna clara por sesión (ej: "40 minutos continuos a esfuerzo suave, charlando cómodo").
+- Vuelta a la calma: 5 minutos muy suave + estiramientos de piernas.
+- Cerrá cada sesión con un renglón "Cómo saber que lo hiciste bien:" en lenguaje cotidiano.`;
+
+  if(n.indexOf("intermedio")===0) return `
+🟡 NIVEL DEL ATLETA: INTERMEDIO:
+- Podés usar zonas Z1-Z5 y frecuencia cardíaca, siempre acompañadas del RPE equivalente.
+- Usá FTP, VAM o VDOT SOLO si el dato figura en la ficha del atleta. Si no figura, no lo menciones ni supongas un valor: trabajá con RPE y sensaciones.
+- Series y cambios de ritmo sí, pero la mayoría del tiempo sigue siendo suave (80/20).
+- Al menos una sesión por semana claramente fácil.`;
+
+  return `
+🔴 NIVEL DEL ATLETA: ${nivel||"Avanzado"}:
+- Podés usar el marco técnico completo (zonas, umbral, VO2máx, TSS/CTL, cadencia, potencia) siempre que el dato exista en la ficha.
+- Si falta FTP, VAM o VDOT, trabajá con RPE y frecuencia cardíaca: no inventes valores.
+- Mantené igual la distribución 80/20 y una sesión de recuperación real por semana.`;
+}
+
+/* El plan salía plagado de inglés ("high-cadence drills", "cornering"). */
+const REGLA_ESPANOL=`
+🗣️ REGLA DE IDIOMA: el plan se escribe ÍNTEGRAMENTE en español rioplatense. Nada de palabras en inglés.
+PROHIBIDO escribir: drill, drills, high-cadence, single-leg, one-leg, track-stand, cornering, sweet spot, over-under, core, sprint, seated, standing, hard-gear, foam roller, warm-up, cool-down, easy, long run, pace, cross-training, recovery, cadence.
+Decilo así:
+- drills → ejercicios de técnica
+- high-cadence → pedaleo rápido y liviano (cadencia alta)
+- single-leg / one-leg → pedaleo con una sola pierna
+- track-stand → quedarse en equilibrio sin apoyar el pie
+- cornering → técnica de curvas
+- sweet spot → esfuerzo controlado, justo por debajo del máximo sostenible
+- over-under → alternar por encima y por debajo del ritmo de umbral
+- seated / standing → sentado / parado sobre los pedales
+- hard-gear → marcha dura (plato grande)
+- foam roller → rodillo de masaje
+- core → zona media (abdomen y lumbares)
+- sprint → pique (esfuerzo máximo corto)
+- warm-up / cool-down → entrada en calor / vuelta a la calma
+Si un término técnico no tiene traducción usual, escribilo en español y aclaralo entre paréntesis la primera vez que aparece.`;
+
+/* Los totales semanales no cerraban con la suma de las sesiones. */
+const REGLA_COHERENCIA=`
+🔢 REGLA DE NÚMEROS — los totales tienen que cerrar:
+- El "Volumen total" de la semana es EXACTAMENTE la suma de las distancias de sus sesiones, y el tiempo total la suma de sus duraciones. Sumá antes de escribir.
+- Nunca declares un volumen semanal menor que la suma de sus propias sesiones.
+- Las distancias tienen que ser coherentes con la duración y con la velocidad real del deporte y del terreno: en montaña se avanza mucho más lento que en ruta, y en subida más lento todavía.
+- El porcentaje 80/20 que declarás tiene que coincidir con el tiempo que realmente asignaste a esfuerzo suave y a esfuerzo fuerte esa semana.`;
+
+/* Especificidad pedida para MTB con bici de ruta disponible. */
+const MTB_BLOCK=`
+🚵 ESPECIFICIDAD MTB / RUTA:
+- Aclará SIEMPRE con qué bicicleta se hace cada sesión: "MTB", "Ruta" o "MTB o Ruta (indistinto)".
+- Ruta (o rodillo): resistencia continua, acumular tiempo y kilómetros suaves, trabajo de cadencia y rodajes progresivos.
+- MTB: desnivel, subidas, cambios de ritmo, terreno irregular, técnica, descensos y esfuerzos cortos propios del monte.
+- La salida larga semanal va preferentemente en MTB; si se hace en ruta, aclaralo y usala para resistencia aeróbica.
+- Usá el desnivel positivo (D+) como variable de carga propia: progresalo gradualmente y NO lo subas todas las semanas junto con el volumen.
+- Diferenciá desnivel acumulado de la salida, largo de cada subida e intensidad de cada subida.
+- Variá los formatos entre semanas: rodajes suaves, subidas sostenidas, cambios de ritmo, series cortas y largas, fartlek, bloques de ritmo controlado, repeticiones en subida, trabajo de cadencia, rodajes progresivos, salidas largas y sesiones técnicas. No repitas "60 minutos suaves" todas las semanas.
+- En MTB no te ates a los vatios: el terreno los hace saltar. Priorizá el RPE y, si hay, la frecuencia cardíaca.`;
+
 /* Regla que impide que el modelo abrevie las semanas 2 en adelante. */
 const REGLA_COMPLETITUD=`
 ⚠️ REGLA DE COMPLETITUD — ES LA REGLA MÁS IMPORTANTE DE TODAS:
@@ -1270,9 +1373,26 @@ async function generarPlan(modo){
   // Get athlete data
   const atls=getAtls();
   const a=aid?atls.find(x=>x.id===aid):null;
-  let atlInfo=a
-    ?`ATLETA: ${a.nombre} | ${edad(a.fnac)} años | ${a.sexo||"—"} | ${a.peso||"?"}kg | ${a.altura||"?"}cm | Deporte: ${a.dep} | Nivel: ${a.nivel} | VAM: ${a.vamK?a.vamK+" km/h":"ND"} | FTP: ${a.ftp?a.ftp+"W":"ND"} | Lesiones previas: ${a.lesiones||"ninguna"} | Tests: ${(a.tests||[]).map(t=>t.type+": "+t.result).join("; ")||"sin tests"} | Objetivo: ${a.obj||obj}`
-    :`Deporte: ${dep} | Nivel: intermedio | Objetivo: ${obj}`;
+  // Solo se mandan los datos que existen: mandar "FTP: ND" hacía que la IA
+  // hablara de FTP en planes de principiantes que no tienen ese dato.
+  let atlInfo;
+  if(a){
+    const campos=[`ATLETA: ${a.nombre}`,`${edad(a.fnac)} años`];
+    if(a.sexo)campos.push(a.sexo);
+    if(a.peso)campos.push(a.peso+"kg");
+    if(a.altura)campos.push(a.altura+"cm");
+    campos.push("Deporte: "+a.dep,"Nivel: "+a.nivel);
+    if(a.vamK)campos.push("VAM: "+a.vamK+" km/h");
+    if(a.ftp)campos.push("FTP: "+a.ftp+"W");
+    campos.push("Lesiones previas: "+(a.lesiones||"ninguna"));
+    const tests=(a.tests||[]).map(t=>t.type+": "+t.result).join("; ");
+    if(tests)campos.push("Tests: "+tests);
+    campos.push("Objetivo: "+(a.obj||obj));
+    if(!a.vamK&&!a.ftp)campos.push("SIN datos de VAM/FTP: trabajá con RPE, no menciones esos indicadores");
+    atlInfo=campos.join(" | ");
+  }else{
+    atlInfo=`Deporte: ${dep} | Nivel: Intermedio | Objetivo: ${obj}`;
+  }
 
   // Get current plan text from editor if exists
   const planActual = document.getElementById("planEditable")?.innerText?.slice(0,800)||"";
@@ -1297,7 +1417,10 @@ async function generarPlan(modo){
   const temporada=isField?(document.getElementById("planTemporada")?.value||"pretemporada"):"";
   const fondoDia=isField?"N/A":(document.getElementById("planFondoDia")?.value||"Sábado");
   const isTri=/tri|dua/i.test(dep_clean);
-  const libBlock=isField?"":(isTri?(RUN_LIB+"\n\n"+CIC_LIB):(isCicl?CIC_LIB:RUN_LIB));
+  const nivelAtl=(a&&a.nivel)||"Intermedio";
+  const esPrinc=/^principiante/i.test(nivelAtl);
+  const runLib=esPrinc?RUN_LIB_BASICO:RUN_LIB, cicLib=esPrinc?CIC_LIB_BASICO:CIC_LIB;
+  const libBlock=isField?"":(isTri?(runLib+"\n\n"+cicLib):(isCicl?cicLib:runLib));
 
   const systemPrompt = isField ? `Sos el preparador físico del club The Move Club (Argentina). Generás planes para DEPORTES DE CAMPO (fútbol, básquet, hockey, etc.). Solo el plan, sin introducciones.
 
@@ -1340,6 +1463,9 @@ FORMATO:
 **Carga:** X min | **RPE:** X/10
 [Días libres: DESCANSO ACTIVO o recuperación post-partido]
 Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
+${bloqueNivel(nivelAtl)}
+${REGLA_ESPANOL}
+${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}` 
 
 : `Sos el Head Coach de The Move Club (Argentina). Solo el plan, sin introducciones.
@@ -1363,7 +1489,11 @@ FORMATO: texto por sesión, SIN tablas.
 ### [DÍA — tipo sesión]
 [Entrada en calor / Parte principal / Vuelta a la calma / Carga]
 [Días libres: DESCANSO ACTIVO — movilidad 15 min]
-Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR
+Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR${esPrinc?" (en un principiante: NO incluyas tabla de zonas; cerrá con «Cómo saber si estás progresando» en lenguaje simple)":""}
+${bloqueNivel(nivelAtl)}
+${isCicl?MTB_BLOCK:""}
+${REGLA_ESPANOL}
+${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}`;
 
     // ── USER PROMPT BY MODE ──

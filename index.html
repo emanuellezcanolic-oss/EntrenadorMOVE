@@ -1585,7 +1585,6 @@ Por cada día de entrenamiento:
 
 CANTIDAD EXACTA A ESCRIBIR: ${sem} semanas × ${dias} días = ${(+sem)*(+dias)} sesiones, TODAS desarrolladas por completo.
 Escribí las ${sem} semanas numeradas de "## SEMANA 1" a "## SEMANA ${sem}", sin saltear ninguna.
-${REGLA_COMPLETITUD}
 Terminá con ## DISTRIBUCIÓN ENERGÉTICA y ## PROGRESIÓN ACWR.`
     : `[NUEVO PLAN DE ENTRENAMIENTO PERSONALIZADO]
 ${atlInfo}
@@ -1600,7 +1599,6 @@ El fondo largo va siempre el ${fondoDia} y es la sesión de mayor volumen de la 
 
 CANTIDAD EXACTA A ESCRIBIR: ${sem} semanas × ${dias} días = ${(+sem)*(+dias)} sesiones de entrenamiento, TODAS desarrolladas por completo.
 Escribí las ${sem} semanas numeradas de "## SEMANA 1" a "## SEMANA ${sem}", sin saltear ninguna.
-${REGLA_COMPLETITUD}
 Terminá con Zonas Personalizadas y Progresión de Cargas.`;
 
     userPrompt = isField
@@ -1653,7 +1651,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       return;
     }
     const semN=parseInt(sem,10)||0;
-    const txt=await groqChat(
+    let txt=await groqChat(
       [{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],
       acc=>{
         const n=contarSemanas(acc);
@@ -1662,19 +1660,23 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     );
     hideLoading();
     if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
+    const fix=corregirAnglicismos(txt);
+    txt=fix.texto;
+    const avisos=auditarPlan(txt,{semanas:semN,dias:+dias,nivel:nivelAtl});
+    window._revisionPlan=panelRevision(avisos,fix.cambios);
     const html=mdToHtml(txt);
     renderPlanOut(txt,html,a,dep,obj);
     if(aid)savePlanToAtl(aid,txt,html,dep,obj);
-    const n=contarSemanas(txt);
-    if(semN&&n&&n<semN)notify(`El plan salió con ${n} de ${semN} semanas. Generalo en tramos más cortos o reintentá.`,"err");
   }catch(err){
     hideLoading();
     if(err.status===401){clearGroqKey();abrirConfigKey(err.message,"err");}
     else if(err.status===404){abrirConfigKey(err.message,"err");cargarModelosGroq(false);}
     // si ya se había generado parte del plan, no la tiramos: la mostramos igual
     if(err.parcial&&(contarSemanas(err.parcial)>0||err.parcial.trim().length>400)){
-      const html=mdToHtml(err.parcial);
-      renderPlanOut(err.parcial,html,a,dep,obj);
+      const fx=corregirAnglicismos(err.parcial);
+      window._revisionPlan=panelRevision(auditarPlan(fx.texto,{semanas:parseInt(sem,10)||0,nivel:(a&&a.nivel)||""}),fx.cambios);
+      const html=mdToHtml(fx.texto);
+      renderPlanOut(fx.texto,html,a,dep,obj);
       if(aid)savePlanToAtl(aid,err.parcial,html,dep,obj);
       notify("Plan incompleto ("+contarSemanas(err.parcial)+" semanas): "+err.message,"err");
     }else{
@@ -1862,6 +1864,93 @@ function mdToHtml(t){
     .replace(/^(?!<[h|u|t|p|l|h])(.+)$/gm,m=>m.trim()?`<p style="margin:5px 0">${m}</p>`:"");
 }
 
+/* ──────────────── REVISIÓN AUTOMÁTICA DEL PLAN ────────────────
+   Lo que se puede verificar con código no se le pide al modelo por texto:
+   pedirlo costaba tokens y se cumplía a medias. Los anglicismos se corrigen
+   solos; lo que exige criterio se le avisa al profesor. */
+const ANGLICISMOS=(()=>{
+  /* El separador tolera guion normal, guion tipográfico (‑ – —) y espacio:
+     los modelos y los PDF emiten cualquiera de ellos. */
+  const G="[-\\u2010-\\u2015\\s]?";
+  const pares=[
+    ["drills?","ejercicios de técnica"],
+    ["high"+G+"cadence","cadencia alta"],
+    ["single"+G+"leg","con una sola pierna"],
+    ["one"+G+"leg","con una sola pierna"],
+    ["track"+G+"stand","equilibrio sin apoyar el pie"],
+    ["cornering","técnica de curvas"],
+    ["sweet"+G+"spot","esfuerzo controlado sostenido"],
+    ["over"+G+"unders?","alternancias sobre y bajo el umbral"],
+    ["foam"+G+"roll(?:er|ing)?","rodillo de masaje"],
+    ["progressive cadence","cadencia progresiva"],
+    ["hard"+G+"gear","marcha dura"],
+    ["cool"+G+"down","vuelta a la calma"],
+    ["warm"+G+"up","entrada en calor"],
+    ["cross"+G+"training","trabajo cruzado"],
+    ["long run","fondo largo"],
+    ["lunges","estocadas"],
+    ["sprints","piques"],
+    ["sprint","pique"],
+    ["seated","sentado"],
+    ["standing","parado"],
+    ["core","zona media"]
+  ];
+  return pares.map(([pat,es])=>[new RegExp("\\b"+pat+"\\b","gi"),es]);
+})();
+
+function corregirAnglicismos(t){
+  let n=0, enc=[];
+  ANGLICISMOS.forEach(([re,es])=>{
+    t=t.replace(re,m=>{n++;if(enc.indexOf(m)<0)enc.push(m);return es});
+  });
+  return {texto:t,cambios:n,encontrados:enc};
+}
+
+/* Compara el volumen declarado de cada semana contra la suma de sus sesiones. */
+function auditarSumas(txt){
+  const av=[], part=txt.split(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+(\d+)/gim);
+  for(let i=1;i<part.length;i+=2){
+    const cuerpo=part[i+1]||"";
+    const dec=cuerpo.match(/(?:Volumen|Carga)[^\n:]{0,20}:[^\n]*?[≈~]?\s*(\d+(?:[.,]\d+)?)\s*km/i);
+    if(!dec)continue;
+    const ses=[...cuerpo.matchAll(/^[^\S\n]*\**\s*Carga[^\n:]{0,12}:\s*\**\s*[≈~]?\s*(\d+(?:[.,]\d+)?)\s*km/gim)]
+      .map(m=>parseFloat(m[1].replace(",",".")));
+    if(ses.length<2)continue;
+    const suma=ses.reduce((x,v)=>x+v,0), declarado=parseFloat(dec[1].replace(",","."));
+    if(Math.abs(suma-declarado)/Math.max(suma,1)>0.15)
+      av.push(`Semana ${part[i]}: declara ${declarado} km y las sesiones suman ${Math.round(suma)} km.`);
+  }
+  return av;
+}
+
+function auditarPlan(txt,ctx){
+  const av=[];
+  const n=contarSemanas(txt);
+  if(ctx.semanas&&n&&n<ctx.semanas) av.push(`Salieron ${n} de las ${ctx.semanas} semanas pedidas.`);
+  av.push(...auditarSumas(txt));
+  if(/^principiante/i.test(ctx.nivel||"")){
+    const j=txt.match(/\bFTP\b|\bTSS\b|\bVO2\s?m[áa]x\b|%\s*FC\s?m[áa]x|\bZ[1-5]\b|\bvatios\b|\bumbral\b/gi)||[];
+    const u=[...new Set(j.map(x=>x.toUpperCase()))];
+    if(u.length) av.push(`Nivel inicial, pero el plan usa: ${u.join(", ")}.`);
+  }
+  if(/(como se indica|según lo detallado|bloques como descritos|series descritas|la progresión indicada|como se describi)/i.test(txt))
+    av.push("Hay sesiones que se remiten a sí mismas en vez de describir el trabajo.");
+  return av;
+}
+
+function panelRevision(avisos,corregidos){
+  if(!avisos.length&&!corregidos) return "";
+  const items=[];
+  if(corregidos) items.push(`<li>Se tradujeron ${corregidos} término${corregidos>1?"s":""} en inglés.</li>`);
+  avisos.forEach(a=>items.push(`<li>${a}</li>`));
+  const hayAlerta=avisos.length>0;
+  return `<div class="no-print" style="margin:0 0 14px;padding:10px 13px;border-radius:6px;font-size:12px;line-height:1.6;
+    background:${hayAlerta?"rgba(230,126,34,.10)":"rgba(46,204,113,.10)"};
+    border:1px solid ${hayAlerta?"rgba(230,126,34,.45)":"rgba(46,204,113,.45)"}">
+    <strong style="letter-spacing:1px">${hayAlerta?"⚠️ REVISÁ ESTO ANTES DE ENTREGARLO":"✅ REVISIÓN AUTOMÁTICA"}</strong>
+    <ul style="margin:7px 0 0 16px;padding:0">${items.join("")}</ul></div>`;
+}
+
 function renderPlanOut(txt,html,a,dep,obj){
   document.getElementById("planOut").innerHTML=`
     <div class="peditor">
@@ -1872,6 +1961,7 @@ function renderPlanOut(txt,html,a,dep,obj){
         <button class="btn btn-s btn-sm" style="background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.4);color:#25d366" onclick="copiarWhatsApp()">💬 WhatsApp</button>
         ${a?`<button class="btn btn-p btn-sm" onclick="openDetail('${a.id}')">Ver atleta →</button>`:""}
       </div>
+      ${window._revisionPlan||""}
       <div class="peditable" id="planEditable" contenteditable="true">${html}</div>
     </div>`;
 }

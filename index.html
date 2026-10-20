@@ -528,6 +528,32 @@ tr:hover td{background:var(--s2)}
                   </optgroup>
                 </select>
               </div>
+              <div class="fg"><div class="fl">Segundo deporte (opcional)</div>
+                <select class="fc" id="planDep2">
+                  <option value="">— solo el deporte principal —</option>
+                  <option>Running</option>
+                  <option>Trail Running</option>
+                  <option>Ciclismo de Ruta</option>
+                  <option>Ciclismo MTB</option>
+                  <option>Natación</option>
+                  <option>Triatlón</option>
+                  <option>Duatlón</option>
+                  <option>Remo</option>
+                  <option>Esquí de Fondo</option>
+                  <option>Spinning / Indoor</option>
+                  <option>Caminata / Trekking</option>
+                  <option>Fútbol</option>
+                  <option>Rugby</option>
+                  <option>Hockey</option>
+                  <option>Basketball</option>
+                  <option>Tenis</option>
+                  <option>Voley</option>
+                  <option>Pádel</option>
+                  <option>Atletismo de Campo</option>
+                  <option>Deportes de Combate</option>
+                </select>
+                <div style="font-size:11px;color:var(--tx3);margin-top:5px">Si el atleta hace dos deportes, sale UN plan que los combina. El de arriba es el que manda.</div>
+              </div>
               <div class="fg"><div class="fl">Objetivo</div>
                 <select class="fc" id="planObj">
                   <optgroup label="Deportes de Campo">
@@ -1190,7 +1216,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v10";
+const APP_VERSION="2026-10-20 · v11";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1333,7 +1359,7 @@ const GLOSARIO_CICL=`- high-cadence → cadencia alta
 - seated / standing → sentado / parado sobre los pedales
 - hard-gear → marcha dura`;
 
-const GLOSARIO_RUN=`- long run → fondo largo
+const GLOSARIO_RUN=`- long run → fondo largo\n- intervals / repeats → pasadas (series)
 - tempo run → ritmo controlado
 - strides → progresivos cortos
 - cross-training → trabajo cruzado`;
@@ -1366,6 +1392,25 @@ const REGLA_COHERENCIA=`
 - Nunca declares un volumen semanal menor que la suma de sus propias sesiones.
 - Las distancias tienen que ser coherentes con la duración y con la velocidad real del deporte y del terreno: en montaña se avanza mucho más lento que en ruta, y en subida más lento todavía.
 - El porcentaje 80/20 que declarás tiene que coincidir con el tiempo que realmente asignaste a esfuerzo suave y a esfuerzo fuerte esa semana.`;
+
+/* Plan combinado: el atleta hace dos deportes y necesita UN plan, no dos
+   pegados. Lo que más rompe un mix es apilar días duros de deportes
+   distintos sin darse cuenta de que el cuerpo es uno solo. */
+function bloqueMix(dep1,dep2){
+  if(!dep2||dep2===dep1)return "";
+  return `
+🔀 PLAN COMBINADO: ${dep1} (principal) + ${dep2} (secundario)
+Este atleta hace los dos. Armá UN plan solo que los integre, no dos planes pegados uno atrás del otro.
+
+- Cada día del plan dice qué deporte toca. Si un día lleva los dos, aclarás el orden y por qué va en ese orden.
+- Los partidos y entrenamientos de ${dep2} SON carga de entrenamiento: entran en el volumen semanal y en la distribución de intensidad. Contalos.
+- Juntá lo exigente en los mismos días y dejá los demás realmente suaves. Dos días duros seguidos de deportes distintos siguen siendo dos días duros seguidos.
+- Después de un partido o una sesión exigente va un día suave o descanso, nunca una sesión de calidad del otro deporte.
+- Cuando en un mismo día vayan técnica y trabajo físico fuerte, la técnica va primero, con el cuerpo fresco.
+- Lo específico de cada deporte sale de ese deporte: los cambios de dirección, las frenadas y el gesto técnico se entrenan jugando. El otro deporte aporta lo que el primero no da por sí solo.
+- Si una semana se complica, se recorta volumen suave. La sesión clave de cada deporte es lo último que se toca.
+- Decí en una línea, al principio del plan, cómo se reparten los dos deportes en la semana y por qué.`;
+}
 
 /* Especificidad pedida para MTB con bici de ruta disponible. */
 const MTB_BLOCK=`
@@ -1578,6 +1623,7 @@ async function generarPlan(modo){
   const isNat = dep.toLowerCase().includes("nat");
 
   const dep_clean=(document.getElementById("planDep")?.value||dep).replace(/[🏃⛰️🚴🚵🏊🏅🚣⛷️🚲🥾]/gu,"").trim();
+  const dep2=(document.getElementById("planDep2")?.value||"").trim();
   const isField=isFieldSport(dep_clean);
   const posicion=isField?(document.getElementById("planPosicion")?.value||""):"";
   const temporada=isField?(document.getElementById("planTemporada")?.value||"pretemporada"):"";
@@ -1630,6 +1676,7 @@ FORMATO:
 [Días libres: DESCANSO ACTIVO o recuperación post-partido]
 Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
 ${bloqueNivel(nivelAtl)}
+${bloqueMix(dep_clean,dep2)}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}` 
@@ -1657,6 +1704,7 @@ FORMATO: texto por sesión, SIN tablas.
 [Días libres: DESCANSO ACTIVO — movilidad 15 min]
 Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR${esPrinc?" (en un principiante: NO incluyas tabla de zonas; cerrá con «Cómo saber si estás progresando» en lenguaje simple)":""}
 ${bloqueNivel(nivelAtl)}
+${bloqueMix(dep_clean,dep2)}
 ${isCicl?MTB_BLOCK:""}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}

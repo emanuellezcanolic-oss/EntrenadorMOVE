@@ -111,6 +111,7 @@ arreglo estaba publicado y el navegador servía HTML viejo.
 | `reglaEspanol(isCicl,isField,dep)` | 1335 | Glosario **específico del deporte** + coherencia de vocabulario |
 | `REGLA_COHERENCIA` | 1354 | Los totales semanales deben cerrar |
 | `MTB_BLOCK` | 1362 | MTB vs ruta, desnivel como carga |
+| `bloqueMix(dep1,dep2)` | — | Plan combinado cuando se elige un segundo deporte (`#planDep2`) |
 | `REGLA_COMPLETITUD` | 1374 | Todas las semanas con el detalle de la primera |
 
 ### Llamada al modelo
@@ -191,7 +192,8 @@ Por orden de importancia:
 5. **Falta trabajo de fuerza** en los planes de resistencia, pese a estar en las
    bibliotecas: no está en el FORMATO ni en la cuenta `semanas × días`.
 6. **Deportes de campo**: `FIELD_SPORTS` incluye tenis, pádel y vóley, pero todo
-   el bloque está escrito para fútbol.
+   el bloque está escrito para fútbol. Con el plan combinado esto se nota más:
+   un mix con pádel usa la rama de campo y le salen rondos.
 7. `kbShort` (~línea 1535) se calcula y nunca se usa: la Biblioteca de Conocimiento
    del profesor se arma, se recorta y se tira.
 8. `mdToHtml` renderiza tablas pero no descarta la fila separadora `|---|---|`;

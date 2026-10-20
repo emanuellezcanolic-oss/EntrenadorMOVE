@@ -292,6 +292,7 @@ tr:hover td{background:var(--s2)}
       <div class="nitem" onclick="importarDB()" style="color:#3498db"><span class="nico">⬆️</span>Importar DB</div>
       <div class="nitem kb-access" style="display:none" onclick="gotoPage('kb')"><span class="nico">📚</span>Base de Conocimiento</div>
       <div class="nitem admin-only" style="display:none" onclick="gotoPage('admin')"><span class="nico">🔐</span>Admin</div>
+      <div id="appVer" title="Versión que está corriendo en tu navegador. Si no coincide con la última publicada, recargá con Ctrl+Shift+R." style="margin-top:auto;padding:14px 16px;font-family:var(--fm);font-size:10px;color:var(--tx3);letter-spacing:.5px"></div>
     </nav>
 
     <div class="content">
@@ -1187,6 +1188,14 @@ function loadAtlData(){
 
 // Biblioteca de metodología basada en la literatura (citando autores/libros).
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
+/* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
+   está mostrando una versión vieja cacheada en vez de la recién publicada. */
+const APP_VERSION="2026-10-20 · v9";
+document.addEventListener("DOMContentLoaded",()=>{
+  const e=document.getElementById("appVer");
+  if(e)e.textContent="v "+APP_VERSION;
+});
+
 const RUN_LIB=`BIBLIOTECA RUNNING (esto es TU fundamento como entrenador; NO nombres a estos autores dentro del plan):
 ZONAS E INTENSIDADES (Daniels, "Daniels' Running Formula", sistema VDOT): cada sesión con un propósito claro.
 - E (fácil, ~65-79% FCmáx): base aeróbica, capilarización, corazón; ritmo conversacional; la mayoría del volumen.

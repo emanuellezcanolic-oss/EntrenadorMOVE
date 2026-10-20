@@ -89,6 +89,11 @@ git checkout main && git merge --ff-only <rama> && git push -u origin main
 GitHub Pages tarda 1-2 min. **Decile siempre que recargue con Ctrl+Shift+R**, o
 ve el HTML viejo cacheado y cree que no funcionó.
 
+**Subí `APP_VERSION`** (cerca de `RUN_LIB`) en cada publicación. Se muestra al pie
+del menú lateral: si el usuario reporta que un cambio "no aparece", pedile esa
+versión antes de buscar el bug en el código. Ya pasó más de una vez que el
+arreglo estaba publicado y el navegador servía HTML viejo.
+
 ---
 
 ## 3. Cómo se genera un plan

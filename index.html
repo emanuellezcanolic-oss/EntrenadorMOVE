@@ -1415,6 +1415,68 @@ async function groqChat(messages,onProgress){
   return full;
 }
 
+/* ─────────── GENERACIÓN POR TRAMOS ───────────
+   El bucle de continuación reenvía todo el historial en cada vuelta, así que
+   la entrada crece al cuadrado: un plan de 12 semanas acumulaba ~284.000
+   tokens de entrada y la segunda llamada ya excedía el límite por minuto del
+   plan gratuito. Acá cada tramo arranca con contexto fresco: la estrategia
+   pactada y la última semana escrita, nada más. */
+const SEMANAS_POR_TRAMO=4;
+
+function ultimaSemanaDe(t){
+  const idx=[...t.matchAll(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/gim)].map(m=>m.index);
+  return idx.length ? t.slice(idx[idx.length-1]).trim().slice(0,1800) : t.slice(-1800);
+}
+function soloSemanas(t){
+  // En los tramos 2+ el modelo a veces vuelve a presentar el plan: se descarta
+  // todo lo anterior al primer encabezado de semana.
+  const m=t.match(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/im);
+  return m && m.index>0 ? t.slice(m.index) : t;
+}
+
+async function generarPorTramos(systemPrompt,userBase,semN,onProgress){
+  const tramos=Math.max(1,Math.ceil(semN/SEMANAS_POR_TRAMO));
+  let full="", estrategia="", ultima="";
+  for(let i=0;i<tramos;i++){
+    const desde=i*SEMANAS_POR_TRAMO+1, hasta=Math.min(semN,(i+1)*SEMANAS_POR_TRAMO);
+    const ultimo=(hasta>=semN);
+    let up;
+    if(i===0){
+      up=userBase+`
+
+📌 ALCANCE DE ESTA RESPUESTA: escribí la estrategia general y SOLO las semanas ${desde} a ${hasta}${ultimo?", y después cerrá el plan con las secciones finales":". NO escribas las semanas siguientes ni cierres el plan: sigue en la próxima respuesta"}.`;
+    }else{
+      up=userBase+`
+
+📌 [CONTINUACIÓN DEL MISMO PLAN — ya escribiste hasta la semana ${desde-1} inclusive]
+
+Esta es la estrategia que ya definiste para este plan:
+${estrategia}
+
+Así quedó la última semana que escribiste:
+${ultima}
+
+TU TAREA AHORA: escribir únicamente las semanas ${desde} a ${hasta}, continuando la progresión desde esos números concretos, con el mismo formato y el mismo nivel de detalle.
+No repitas la estrategia, no vuelvas a presentar el plan y no reescribas las semanas anteriores: empezá directamente por el encabezado de la semana ${desde}.${ultimo?`
+Al terminar la semana ${semN}, cerrá el plan con las secciones finales.`:`
+NO cierres el plan todavía.`}`;
+    }
+    const parte=await groqChat(
+      [{role:"system",content:systemPrompt},{role:"user",content:up}],
+      acc=>onProgress(full+"\n"+acc,desde,hasta)
+    );
+    const limpio=(i===0?parte:soloSemanas(parte)).trim();
+    if(!limpio)continue;
+    full+=(full?"\n\n":"")+limpio;
+    if(i===0){
+      const corte=parte.search(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+1\b/im);
+      estrategia=(corte>0?parte.slice(0,corte):parte.slice(0,1200)).trim().slice(0,1200);
+    }
+    ultima=ultimaSemanaDe(limpio);
+  }
+  return full;
+}
+
 async function generarPlan(modo){
   modo = modo||"nuevo";
   // Close lesion modal if open
@@ -1651,13 +1713,13 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       return;
     }
     const semN=parseInt(sem,10)||0;
-    let txt=await groqChat(
-      [{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],
-      acc=>{
-        const n=contarSemanas(acc);
-        showLoading(n&&semN?`Escribiendo el plan... semana ${n} de ${semN} ⚡`:"Generando con IA científica... ⚡");
-      }
-    );
+    const prog=(acc,desde,hasta)=>{
+      const n=Math.max(contarSemanas(acc),desde?desde-1:0);
+      showLoading(semN?`Escribiendo el plan... semana ${Math.min(n||desde||1,semN)} de ${semN} ⚡`:"Generando con IA científica... ⚡");
+    };
+    let txt = (modo==="nuevo"&&semN>SEMANAS_POR_TRAMO)
+      ? await generarPorTramos(systemPrompt,userPrompt,semN,prog)
+      : await groqChat([{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],acc=>prog(acc));
     hideLoading();
     if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
     const fix=corregirAnglicismos(txt);

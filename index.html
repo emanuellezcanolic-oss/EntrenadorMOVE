@@ -1394,7 +1394,10 @@ const GROQ_MAX_TOKENS=8000;
 const GROQ_MAX_CONT=8;
 const CONTINUAR_MSG="Continuá EXACTAMENTE donde cortaste, sin repetir nada de lo ya escrito, sin resumir y sin volver a hacer una introducción. Mantené el mismo nivel de detalle en cada sesión (Entrada en calor / Parte principal / Vuelta a la calma / Carga). Si estabas a mitad de una sesión, terminala.";
 
-function contarSemanas(t){return (String(t).match(/^\s*#{1,3}\s*SEMANA\s*\d+/gim)||[]).length}
+/* Las almohadillas son opcionales: si el modelo escribe "SEMANA 3 — Carga"
+   sin markdown, igual tiene que contarse (si no, el progreso y los avisos
+   quedaban en cero justo cuando el plan salía mal). */
+function contarSemanas(t){return (String(t).match(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/gim)||[]).length}
 
 async function groqChat(messages,onProgress){
   const key=getGroqKey();

@@ -1190,7 +1190,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v9";
+const APP_VERSION="2026-10-20 · v10";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1399,7 +1399,7 @@ const REGLA_COMPLETITUD=`
    muy por encima de lo que entra en una sola respuesta. Por eso, si el modelo
    corta por límite de longitud (finish_reason "length"), se le pide que siga
    exactamente donde quedó y se van pegando los pedazos.                      */
-const GROQ_MAX_TOKENS=8000;
+const GROQ_MAX_TOKENS=3000;
 const GROQ_MAX_CONT=8;
 const CONTINUAR_MSG="Continuá EXACTAMENTE donde cortaste, sin repetir nada de lo ya escrito, sin resumir y sin volver a hacer una introducción. Mantené el mismo nivel de detalle en cada sesión (Entrada en calor / Parte principal / Vuelta a la calma / Carga). Si estabas a mitad de una sesión, terminala.";
 
@@ -1408,15 +1408,41 @@ const CONTINUAR_MSG="Continuá EXACTAMENTE donde cortaste, sin repetir nada de l
    quedaban en cero justo cuando el plan salía mal). */
 function contarSemanas(t){return (String(t).match(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/gim)||[]).length}
 
-async function groqChat(messages,onProgress){
-  const key=getGroqKey();
-  let msgs=messages.slice(), full="";
-  for(let i=0;i<=GROQ_MAX_CONT;i++){
+/* El plan gratuito de Groq limita los tokens POR MINUTO (8000 en on_demand).
+   Cuando se pasa, el 429 trae el tiempo exacto de espera: en vez de fallar,
+   esperamos ese tiempo con la cuenta a la vista y reintentamos. */
+const GROQ_MAX_429=4;
+
+function esperaDe429(msg){
+  const m=/try again in ([\d.]+)\s*s/i.exec(msg||"");
+  const seg=m?Math.ceil(parseFloat(m[1]))+2:30;
+  return Math.max(5,Math.min(95,seg));
+}
+async function esperarConCuenta(seg,motivo){
+  for(let s=seg;s>0;s--){
+    showLoading(`${motivo} ${s}s…`);
+    await new Promise(r=>setTimeout(r,1000));
+  }
+}
+async function pedirAGroq(key,msgs){
+  for(let r=0;;r++){
     const res=await fetch(GROQ_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
       body:JSON.stringify({model:getGroqModel(),max_tokens:GROQ_MAX_TOKENS,temperature:0.3,messages:msgs})
     });
+    if(res.status!==429||r>=GROQ_MAX_429)return res;
+    let d={};try{d=await res.clone().json()}catch{}
+    await esperarConCuenta(esperaDe429(d&&d.error&&d.error.message),
+      "Groq llegó a su límite por minuto. Sigo en");
+  }
+}
+
+async function groqChat(messages,onProgress){
+  const key=getGroqKey();
+  let msgs=messages.slice(), full="";
+  for(let i=0;i<=GROQ_MAX_CONT;i++){
+    const res=await pedirAGroq(key,msgs);
     if(!res.ok){
       const err=new Error(await groqErrorMsg(res));
       err.status=res.status;err.parcial=full;
@@ -1440,11 +1466,11 @@ async function groqChat(messages,onProgress){
    tokens de entrada y la segunda llamada ya excedía el límite por minuto del
    plan gratuito. Acá cada tramo arranca con contexto fresco: la estrategia
    pactada y la última semana escrita, nada más. */
-const SEMANAS_POR_TRAMO=4;
+const SEMANAS_POR_TRAMO=2;
 
 function ultimaSemanaDe(t){
   const idx=[...t.matchAll(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/gim)].map(m=>m.index);
-  return idx.length ? t.slice(idx[idx.length-1]).trim().slice(0,1800) : t.slice(-1800);
+  return idx.length ? t.slice(idx[idx.length-1]).trim().slice(0,1200) : t.slice(-1200);
 }
 function soloSemanas(t){
   // En los tramos 2+ el modelo a veces vuelve a presentar el plan: se descarta
@@ -1489,7 +1515,7 @@ NO cierres el plan todavía.`}`;
     full+=(full?"\n\n":"")+limpio;
     if(i===0){
       const corte=parte.search(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+1\b/im);
-      estrategia=(corte>0?parte.slice(0,corte):parte.slice(0,1200)).trim().slice(0,1200);
+      estrategia=(corte>0?parte.slice(0,corte):parte.slice(0,800)).trim().slice(0,800);
     }
     ultima=ultimaSemanaDe(limpio);
   }

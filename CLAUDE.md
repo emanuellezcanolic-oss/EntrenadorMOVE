@@ -115,14 +115,23 @@ arreglo estaba publicado y el navegador servía HTML viejo.
 
 ### Llamada al modelo
 
-- `groqChat()` (1402): una llamada con continuación automática si corta por
-  `finish_reason === "length"`. `GROQ_MAX_TOKENS = 8000`.
-- `generarPorTramos()` (1447): para planes de más de 4 semanas. Divide en bloques
-  de `SEMANAS_POR_TRAMO = 4`, cada uno con **contexto fresco** (solo la estrategia
-  y la última semana escrita). Esto existe porque encadenar continuaciones hacía
-  crecer la entrada al cuadrado: ~284.000 tokens en un plan de 12 semanas, y la
-  segunda llamada ya excedía el límite por minuto del plan gratuito de Groq.
-  Con tramos son ~7.900 en total.
+- `groqChat()`: una llamada con continuación automática si corta por
+  `finish_reason === "length"`. `GROQ_MAX_TOKENS = 3000`.
+- `generarPorTramos()`: para planes de más de `SEMANAS_POR_TRAMO = 2` semanas.
+  Cada bloque arranca con **contexto fresco** (solo la estrategia y la última
+  semana escrita). Existe porque encadenar continuaciones hacía crecer la entrada
+  al cuadrado: ~284.000 tokens en un plan de 12 semanas.
+- `pedirAGroq()`: reintenta ante un 429 esperando lo que el propio error indica,
+  con la cuenta regresiva a la vista. Hasta `GROQ_MAX_429 = 4` veces.
+
+**El límite que manda es TPM, no el total.** El plan gratuito de Groq
+(`on_demand`) da **8000 tokens por minuto**, y cuenta entrada + `max_tokens`
+reservados. Un pedido de 2600 de entrada con `max_tokens` 8000 no entra nunca,
+por más que el plan completo sea chico. De ahí los números de arriba: el pico por
+pedido queda en ~5600. **Si tocás `GROQ_MAX_TOKENS` o `SEMANAS_POR_TRAMO`,
+recalculá que entrada + max_tokens siga debajo de 8000.** Un plan de 12 semanas
+sale en ~6 llamadas y tarda varios minutos, con esperas de 30-60s entre medio:
+es el precio del plan gratuito, no un bug.
 
 ### Revisión automática de la salida (línea ~1973)
 

@@ -1216,7 +1216,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v11";
+const APP_VERSION="2026-10-20 · v12";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1469,12 +1469,12 @@ async function esperarConCuenta(seg,motivo){
     await new Promise(r=>setTimeout(r,1000));
   }
 }
-async function pedirAGroq(key,msgs){
+async function pedirAGroq(key,msgs,maxTok){
   for(let r=0;;r++){
     const res=await fetch(GROQ_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
-      body:JSON.stringify({model:getGroqModel(),max_tokens:GROQ_MAX_TOKENS,temperature:0.3,messages:msgs})
+      body:JSON.stringify({model:getGroqModel(),max_tokens:maxTok||GROQ_MAX_TOKENS,temperature:0.3,messages:msgs})
     });
     if(res.status!==429||r>=GROQ_MAX_429)return res;
     let d={};try{d=await res.clone().json()}catch{}
@@ -1483,11 +1483,11 @@ async function pedirAGroq(key,msgs){
   }
 }
 
-async function groqChat(messages,onProgress){
+async function groqChat(messages,onProgress,maxTok){
   const key=getGroqKey();
   let msgs=messages.slice(), full="";
   for(let i=0;i<=GROQ_MAX_CONT;i++){
-    const res=await pedirAGroq(key,msgs);
+    const res=await pedirAGroq(key,msgs,maxTok);
     if(!res.ok){
       const err=new Error(await groqErrorMsg(res));
       err.status=res.status;err.parcial=full;
@@ -1511,7 +1511,27 @@ async function groqChat(messages,onProgress){
    tokens de entrada y la segunda llamada ya excedía el límite por minuto del
    plan gratuito. Acá cada tramo arranca con contexto fresco: la estrategia
    pactada y la última semana escrita, nada más. */
-const SEMANAS_POR_TRAMO=2;
+/* Partir en tramos cuesta tiempo: cada llamada extra consume del límite por
+   minuto y obliga a esperar. Así que el tramo se calcula para que entre la
+   mayor cantidad de semanas posible en una sola llamada, en vez de usar un
+   número fijo. Un plan de 4 semanas × 3 días entra entero y no espera nada. */
+const GROQ_TPM=8000;            // plan gratuito on_demand
+const MARGEN_TPM=7200;          // aire para no rozar el límite
+const TOPE_SALIDA=4000;
+
+const estTok=t=>Math.ceil(String(t||"").length/3.4);
+
+function planificarTramos(semN,dias,tokEntrada){
+  const porSem=Math.max(350,(+dias||4)*200);          // ~200 tokens por sesión
+  const disponible=Math.max(900,MARGEN_TPM-tokEntrada);
+  const maxSem=Math.max(1,Math.floor(disponible/porSem));
+  const semPorTramo=Math.max(1,Math.min(semN,maxSem,6));
+  return {semPorTramo,tramos:Math.ceil(semN/semPorTramo),porSem};
+}
+function salidaParaTramo(semanas,porSem,esPrimero){
+  return Math.min(TOPE_SALIDA,Math.ceil(semanas*porSem*1.4)+(esPrimero?500:0));
+}
+
 
 function ultimaSemanaDe(t){
   const idx=[...t.matchAll(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+\d+/gim)].map(m=>m.index);
@@ -1524,11 +1544,12 @@ function soloSemanas(t){
   return m && m.index>0 ? t.slice(m.index) : t;
 }
 
-async function generarPorTramos(systemPrompt,userBase,semN,onProgress){
-  const tramos=Math.max(1,Math.ceil(semN/SEMANAS_POR_TRAMO));
+async function generarPorTramos(systemPrompt,userBase,semN,onProgress,dias){
+  const plan=planificarTramos(semN,dias,estTok(systemPrompt)+estTok(userBase)+500);
+  const tramos=plan.tramos;
   let full="", estrategia="", ultima="";
   for(let i=0;i<tramos;i++){
-    const desde=i*SEMANAS_POR_TRAMO+1, hasta=Math.min(semN,(i+1)*SEMANAS_POR_TRAMO);
+    const desde=i*plan.semPorTramo+1, hasta=Math.min(semN,(i+1)*plan.semPorTramo);
     const ultimo=(hasta>=semN);
     let up;
     if(i===0){
@@ -1553,7 +1574,8 @@ NO cierres el plan todavía.`}`;
     }
     const parte=await groqChat(
       [{role:"system",content:systemPrompt},{role:"user",content:up}],
-      acc=>onProgress(full+"\n"+acc,desde,hasta)
+      acc=>onProgress(full+"\n"+acc,desde,hasta),
+      salidaParaTramo(hasta-desde+1,plan.porSem,i===0)
     );
     const limpio=(i===0?parte:soloSemanas(parte)).trim();
     if(!limpio)continue;
@@ -1810,9 +1832,11 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       const n=Math.max(contarSemanas(acc),desde?desde-1:0);
       showLoading(semN?`Escribiendo el plan... semana ${Math.min(n||desde||1,semN)} de ${semN} ⚡`:"Generando con IA científica... ⚡");
     };
-    let txt = (modo==="nuevo"&&semN>SEMANAS_POR_TRAMO)
-      ? await generarPorTramos(systemPrompt,userPrompt,semN,prog)
-      : await groqChat([{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],acc=>prog(acc));
+    const plan0=planificarTramos(semN||1,dias,estTok(systemPrompt)+estTok(userPrompt)+500);
+    let txt = (modo==="nuevo"&&plan0.tramos>1)
+      ? await generarPorTramos(systemPrompt,userPrompt,semN,prog,dias)
+      : await groqChat([{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],
+          acc=>prog(acc), salidaParaTramo(semN||1,plan0.porSem,true));
     hideLoading();
     if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
     const fix=corregirAnglicismos(txt);

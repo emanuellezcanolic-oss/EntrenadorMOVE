@@ -118,21 +118,30 @@ arreglo estaba publicado y el navegador servía HTML viejo.
 
 - `groqChat()`: una llamada con continuación automática si corta por
   `finish_reason === "length"`. `GROQ_MAX_TOKENS = 3000`.
-- `generarPorTramos()`: para planes de más de `SEMANAS_POR_TRAMO = 2` semanas.
-  Cada bloque arranca con **contexto fresco** (solo la estrategia y la última
-  semana escrita). Existe porque encadenar continuaciones hacía crecer la entrada
-  al cuadrado: ~284.000 tokens en un plan de 12 semanas.
+- `generarPorTramos()`: parte el plan en bloques, cada uno con **contexto fresco**
+  (solo la estrategia y la última semana escrita). Existe porque encadenar
+  continuaciones hacía crecer la entrada al cuadrado: ~284.000 tokens en un plan
+  de 12 semanas.
+- `planificarTramos(semN,dias,tokEntrada)`: **el tamaño del tramo no es fijo.** Se
+  calcula para meter la mayor cantidad de semanas que entren en una llamada sin
+  pasar `MARGEN_TPM`, estimando ~200 tokens por sesión. `salidaParaTramo()` fija
+  el `max_tokens` de esa llamada en lugar de reservar un número fijo. Un plan de
+  4 semanas × 3 días sale en **una** llamada sin esperas; uno de 12 × 6 en cuatro.
 - `pedirAGroq()`: reintenta ante un 429 esperando lo que el propio error indica,
   con la cuenta regresiva a la vista. Hasta `GROQ_MAX_429 = 4` veces.
 
 **El límite que manda es TPM, no el total.** El plan gratuito de Groq
 (`on_demand`) da **8000 tokens por minuto**, y cuenta entrada + `max_tokens`
 reservados. Un pedido de 2600 de entrada con `max_tokens` 8000 no entra nunca,
-por más que el plan completo sea chico. De ahí los números de arriba: el pico por
-pedido queda en ~5600. **Si tocás `GROQ_MAX_TOKENS` o `SEMANAS_POR_TRAMO`,
-recalculá que entrada + max_tokens siga debajo de 8000.** Un plan de 12 semanas
-sale en ~6 llamadas y tarda varios minutos, con esperas de 30-60s entre medio:
-es el precio del plan gratuito, no un bug.
+por más que el plan completo sea chico. De ahí el cálculo adaptativo: el pico por pedido
+queda en ~6600 de los 8000. **Partir en más tramos NO acelera: cada llamada extra
+consume del mismo minuto y obliga a esperar.** Por eso conviene la llamada más
+grande que entre, no la más chica. Si tocás `MARGEN_TPM` o `TOPE_SALIDA`,
+verificá con un test que entrada + max_tokens siga debajo de 8000.
+
+Bajar el tamaño del prompt de entrada (hoy ~2800-3600 tokens) es lo que más
+aceleraría los planes largos: cada token de entrada que se recorta deja lugar
+para más semanas por llamada.
 
 ### Revisión automática de la salida (línea ~1973)
 

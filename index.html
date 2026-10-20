@@ -1180,7 +1180,7 @@ function loadAtlData(){
 
 // Biblioteca de metodología basada en la literatura (citando autores/libros).
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
-const RUN_LIB=`BIBLIOTECA RUNNING (fundamentá el plan en esto; citar autores):
+const RUN_LIB=`BIBLIOTECA RUNNING (esto es TU fundamento como entrenador; NO nombres a estos autores dentro del plan):
 ZONAS E INTENSIDADES (Daniels, "Daniels' Running Formula", sistema VDOT): cada sesión con un propósito claro.
 - E (fácil, ~65-79% FCmáx): base aeróbica, capilarización, corazón; ritmo conversacional; la mayoría del volumen.
 - M (ritmo de maratón).
@@ -1191,14 +1191,14 @@ Fijar ritmos con el VDOT del atleta; si no hay dato, usar rangos por nivel, nunc
 MARATÓN (Pfitzinger & Douglas, "Advanced Marathoning"): mesociclos resistencia base → umbral+resistencia → específico de carrera → afinamiento (taper). Tipos de sesión: recuperación, aeróbico general, medio-largo, tirada larga, umbral (LT/tempo), VO2máx, ritmo de maratón y carreras de preparación (tune-up). Construcción progresiva del volumen y recuperación entre sesiones de calidad.
 ULTRA / TRAIL (Koop, "Training Essentials for Ultrarunning"): la intensidad bien dosificada pesa más que solo acumular kilómetros; entrenar con especificidad al terreno de la carrera (desnivel positivo/vertical y tipo de superficie); periodización hacia el evento; ensayar la estrategia de alimentación e hidratación y hacer "gut training" (entrenar el intestino), porque en ultra la nutrición decide la carrera.
 DISTRIBUCIÓN (Seiler / Fitzgerald, "80/20 Running"): ~80% del tiempo en baja intensidad (E) y ~20% en alta (T/I/R); lo fácil, realmente fácil.
-PERIODIZACIÓN Y CARGA: de lo general a lo específico; microciclos con descarga periódica; cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, core, pliometría ligera); progresión conservadora del volumen (~≤10%/sem) y respetar el ACWR 0.8-1.3 (Gabbett).`;
-const CIC_LIB=`BIBLIOTECA CICLISMO (fundamentá el plan en esto; citar autores):
+PERIODIZACIÓN Y CARGA: de lo general a lo específico; microciclos con descarga periódica; cadencia objetivo ~170-185 ppm; fuerza 2×/sem (excéntrico, zona media, pliometría ligera); progresión conservadora del volumen (~≤10%/sem) y respetar el ACWR 0.8-1.3 (Gabbett).`;
+const CIC_LIB=`BIBLIOTECA CICLISMO (esto es TU fundamento como entrenador; NO nombres a estos autores dentro del plan):
 FUNDAMENTO (Allen & Coggan, "Training and Racing with a Power Meter"): FTP como ancla; 7 zonas de potencia; carga por TSS/IF/NP; PMC → CTL (fitness, 42 d), ATL (fatiga, 7 d), TSB (frescura). Rampa de CTL segura ≤ ~5-8 TSS/semana.
 INTENSIDAD (Friel, "Manual de entrenamiento del ciclista", 4ª ed): la intensidad es el factor decisivo, no solo el volumen. Construir primero una base aeróbica amplia (modelo pirámide) antes de la alta intensidad. Medir con potencia (ideal), FC o RPE de Borg; el umbral funcional (FTP/UL) es la referencia central.
 PERIODIZACIÓN (Friel): períodos Preparación → Base → Fortalecimiento → Máximo → Carrera → Transición. De lo general a lo específico: volumen alto e intensidad baja al inicio; luego baja el volumen y sube la intensidad y la especificidad. Semana de descarga/recuperación cada 4ª semana (cada 3ª en mayores de 40) en Base y Fortalecimiento: NO saltarla. Apuntar a 2-3 picos de forma por año, no forma constante todo el año.
 CAPACIDADES (Friel): resistencia aeróbica (casi todo el año), fuerza (gimnasio), vigor/fuerza en bici (subidas, marchas largas), habilidades de velocidad (cadencia y técnica de pedaleo), resistencia muscular (tipo contrarreloj, clave), resistencia anaeróbica (VO2máx) y potencia (sprints).
 FUERZA — fases (Friel): AA (adaptación anatómica: muchas reps, carga leve) en Preparación → FM (fuerza máxima: cargas altas, pocas reps) en Base 1 → MF (mantenimiento) el resto de la temporada; sin pesas la semana de una carrera prioritaria. Importante sobre todo en mujeres y mayores de 40.
-SESIONES CLAVE (potencia): Z2 fondo largo (base metabólica y mitocondrial, San Millán); Sweet Spot 88-94% FTP; Umbral 2×20 min 95-105%; over-unders; VO2máx 5×3 min 110-120% o series 30/15 (Rønnestad). Cadencia 85-95 rpm. Distribución polarizada ~80/20 (Seiler): mayoría en Z2, minoría en Z4-Z5.
+SESIONES CLAVE (potencia): Z2 fondo largo (base metabólica y mitocondrial, San Millán); esfuerzo controlado sostenido al 88-94% del FTP; Umbral 2×20 min 95-105%; alternancias por encima y por debajo del umbral; VO2máx 5×3 min 110-120% o series 30/15 (Rønnestad). Cadencia 85-95 rpm. Distribución polarizada ~80/20 (Seiler): mayoría en Z2, minoría en Z4-Z5.
 TEST (Friel): reevaluar FTP/potencia crítica cada 4-6 semanas para reajustar zonas y carga.`;
 
 /* Bibliotecas simplificadas para principiantes: las completas están llenas de
@@ -1265,24 +1265,49 @@ SIMPLICIDAD (que se pueda ejecutar sin pensar):
 }
 
 /* El plan salía plagado de inglés ("high-cadence drills", "cornering"). */
-const REGLA_ESPANOL=`
-🗣️ REGLA DE IDIOMA: el plan se escribe ÍNTEGRAMENTE en español rioplatense. Nada de palabras en inglés.
-PROHIBIDO escribir: drill, drills, high-cadence, single-leg, one-leg, track-stand, cornering, sweet spot, over-under, core, sprint, seated, standing, hard-gear, foam roller, warm-up, cool-down, easy, long run, pace, cross-training, recovery, cadence.
-Decilo así:
-- drills → ejercicios de técnica
-- high-cadence → pedaleo rápido y liviano (cadencia alta)
-- single-leg / one-leg → pedaleo con una sola pierna
-- track-stand → quedarse en equilibrio sin apoyar el pie
-- cornering → técnica de curvas
-- sweet spot → esfuerzo controlado, justo por debajo del máximo sostenible
-- over-under → alternar por encima y por debajo del ritmo de umbral
-- seated / standing → sentado / parado sobre los pedales
-- hard-gear → marcha dura (plato grande)
-- foam roller → rodillo de masaje
+const GLOSARIO_COMUN=`- drill / drills → ejercicios de técnica
 - core → zona media (abdomen y lumbares)
+- foam roller → rodillo de masaje
 - sprint → pique (esfuerzo máximo corto)
 - warm-up / cool-down → entrada en calor / vuelta a la calma
-Si un término técnico no tiene traducción usual, escribilo en español y aclaralo entre paréntesis la primera vez que aparece.`;
+- easy / recovery → suave / regenerativo
+- pace → ritmo
+- lunges → estocadas`;
+
+const GLOSARIO_CICL=`- high-cadence → cadencia alta
+- single-leg / one-leg → con una sola pierna
+- track-stand → equilibrio sin apoyar el pie
+- cornering → técnica de curvas
+- esfuerzo controlado sostenido → esfuerzo controlado sostenido
+- over-under → alternar por encima y por debajo del umbral
+- seated / standing → sentado / parado sobre los pedales
+- hard-gear → marcha dura`;
+
+const GLOSARIO_RUN=`- long run → fondo largo
+- tempo run → ritmo controlado
+- strides → progresivos cortos
+- cross-training → trabajo cruzado`;
+
+/* El glosario se arma según el deporte. Mandarlo entero hacía que un plan de
+   running saliera hablando de pedaleo: el modelo copiaba las frases de
+   traducción de ciclismo como si fueran contenido de la sesión. */
+function reglaEspanol(isCicl,isField,deporte){
+  const glos=[GLOSARIO_COMUN];
+  if(isCicl)glos.push(GLOSARIO_CICL);
+  else if(!isField)glos.push(GLOSARIO_RUN);
+  return `
+🗣️ REGLA DE IDIOMA: el plan se escribe ÍNTEGRAMENTE en español rioplatense. Ninguna palabra en inglés, ni siquiera entre comillas.
+
+⚠️ EL GLOSARIO DE ABAJO ES UNA AYUDA DE TRADUCCIÓN PARA VOS, NO ES TEXTO DEL PLAN.
+Nunca copies estas frases literalmente dentro de una sesión, ni entre comillas. Describí cada ejercicio con tus propias palabras.
+${glos.join("\n")}
+
+⚠️ COHERENCIA DE DEPORTE — este plan es de ${deporte}.
+Cada ejercicio, cada gesto, cada parte del equipo y cada palabra que uses tienen que pertenecer a ${deporte}.
+Antes de escribir un ejercicio, preguntate: ¿esto se hace en ${deporte}? Si pertenece a otro deporte, para este plan no existe.
+
+Si un término técnico no tiene traducción usual, escribilo en español y aclaralo entre paréntesis la primera vez.`;
+}
 
 /* Los totales semanales no cerraban con la suma de las sesiones. */
 const REGLA_COHERENCIA=`
@@ -1312,7 +1337,7 @@ const REGLA_COMPLETITUD=`
 3. PROHIBIDO escribir una sesión en una sola línea del tipo "LUNES – Rodaje fácil 50 min, 16 km, RPE 2". Eso es un error grave: esa sesión tiene que ocupar sus 4 bloques igual que en la Semana 1.
 4. PROHIBIDO escribir "ídem", "igual que la semana anterior", "misma estructura", "se repite", "como en la Semana 1", "análogo" o cualquier referencia cruzada para no escribir una sesión.
 5. CADA sesión de CADA semana lleva SIEMPRE sus 4 bloques escritos y completos:
-   **Entrada en calor:** duración + drills concretos
+   **Entrada en calor:** duración + ejercicios de técnica concretos
    **Parte principal:** series × distancia/tiempo + intensidad (zona/RPE/%) + pausa + foco técnico
    **Vuelta a la calma:** afloje + estiramientos concretos
    **Carga:** volumen | RPE | Zona
@@ -1427,25 +1452,25 @@ async function generarPlan(modo){
 ⚠️ REGLA ABSOLUTA: Este es un deporte de campo, NO running. PROHIBIDO generar series de 1000m, 2000m, ni rodajes continuos como método principal. El trabajo aeróbico se hace con pelota o en circuitos intermitentes.
 
 BASES CIENTÍFICAS OBLIGATORIAS PARA DEPORTES DE CAMPO:
-- Jovanovic HIIT & Agile Periodization: ondulación de carga semanal, SIT (Sprint Interval Training), RSS (Repeated Sprint Sequences), SSG (Small Sided Games)
+- Jovanovic HIIT & Agile Periodization: ondulación de carga semanal, SIT (series de pique máximo), RSA (capacidad de repetir piques), SSG (Small Sided Games)
 - Bompa: bloques Acumulación → Transformación → Realización según fase de temporada
 - Verkhoshansky: método conjugado, pliometría, fuerza reactiva
 - Gabbett: ACWR 0.8-1.3, carga crónica vs aguda
-- Estructura energética del fútbol: ~90 min, ~1000 acciones explosivas, 600-700m de sprints, 10-15% alta intensidad
+- Estructura energética del fútbol: ~90 min, ~1000 acciones explosivas, 600-700m en piques, 10-15% alta intensidad
 
 TIPOS DE SESIÓN para fútbol/deportes de campo:
-• SIT (Sprint Interval): 6-10 × 30-40m sprint máximo, pausa completa 2-3min (potencia anaeróbica aláctica)
-• RSS (Repeated Sprints): 5-8 × 20-30m sprints con pausa incompleta 20-30seg (resistencia anaeróbica)
-• HIIT intermitente: 10-15 × (10seg sprint / 20seg trote) o 6×4min Z4 con 3min pausa (aeróbico potencia)
-• SSG (Juego reducido): 3vs3 o 4vs4 en espacio reducido, 4-6 series de 4-6min, pausa 2-3min (aeróbico + técnico)
+• SIT (piques máximos): 6-10 × 30-40m pique máximo, pausa completa 2-3min (potencia anaeróbica aláctica)
+• RSA (piques repetidos): 5-8 × 20-30m piques con pausa incompleta 20-30seg (resistencia anaeróbica)
+• HIIT intermitente: 10-15 × (10seg pique / 20seg trote) o 6×4min Z4 con 3min pausa (aeróbico potencia)
+• Juego reducido (SSG): 3vs3 o 4vs4 en espacio reducido, 4-6 series de 4-6min, pausa 2-3min (aeróbico + técnico)
 • Pliometría/potencia: saltos, cambios de dirección, aceleraciones, frenadas excéntricas
 • Técnico-táctico: trabajo con pelota integrando estímulo físico
-• Fuerza funcional: sentadillas, lunges, core, cadena posterior
+• Fuerza funcional: sentadillas, estocadas, zona media, cadena posterior
 
 ESTRUCTURA DE CADA SESIÓN:
-**Entrada en calor (15 min):** activación preventiva (cadera, isquios, tobillo), drills de movilidad dinámica, aceleraciones progresivas 30-40m × 4-6 reps, rondo o trabajo técnico suave
+**Entrada en calor (15 min):** activación preventiva (cadera, isquios, tobillo), ejercicios de movilidad dinámica, aceleraciones progresivas 30-40m × 4-6 reps, rondo o trabajo técnico suave
 **Parte principal:** ejercicios intermitentes/explosivos según tipo de sesión, series × duración/distancia, intensidad (% vel máxima o RPE), pausa cronometrada
-**Vuelta a la calma:** trote suave 5-8 min, estiramientos específicos cuádriceps/isquios/gemelos/cadera, foam roller si disponible
+**Vuelta a la calma:** trote suave 5-8 min, estiramientos específicos cuádriceps/isquios/gemelos/cadera, rodillo de masaje si hay
 **Carga:** tiempo total | RPE: X/10
 
 PERIODIZACIÓN por temporada:
@@ -1455,16 +1480,16 @@ PERIODIZACIÓN por temporada:
 
 FORMATO:
 ## SEMANA X — [Tipo microciclo]
-**Objetivo:** [adaptación fisiológica] | **Carga total:** X min | **Foco:** [SIT/RSS/SSG/Fuerza]
+**Objetivo:** [adaptación fisiológica] | **Carga total:** X min | **Foco:** [piques/piques repetidos/juego reducido/fuerza]
 ### [DÍA — Tipo sesión]
-**Entrada en calor:** [15 min — drills específicos]
+**Entrada en calor:** [15 min — ejercicios de técnica específicos]
 **Parte principal:** [método + series × duración/distancia + intensidad + pausa]
 **Vuelta a la calma:** [trote suave + estiramientos]
 **Carga:** X min | **RPE:** X/10
 [Días libres: DESCANSO ACTIVO o recuperación post-partido]
 Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
 ${bloqueNivel(nivelAtl)}
-${REGLA_ESPANOL}
+${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}` 
 
@@ -1477,7 +1502,7 @@ PERIODIZACIÓN: Microciclos Ajuste→Control→Carga→Descarga (3:1). Z1=suave 
 ${libBlock}
 
 ESTRUCTURA DE CADA SESIÓN:
-**Entrada en calor (10-15 min):** drills técnicos específicos + activación + rodaje suave
+**Entrada en calor (10-15 min):** ejercicios de técnica específicos + activación + rodaje suave
 **Parte principal:** series×distancia, intensidad (Zona + EEP), pausa cronometrada
 **Vuelta a la calma:** 1-2 km trote suave como afloje + estiramientos 8-10 min
 **Carga:** km totales | RPE: X/10 | Zona: Z[X]
@@ -1492,7 +1517,7 @@ FORMATO: texto por sesión, SIN tablas.
 Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR${esPrinc?" (en un principiante: NO incluyas tabla de zonas; cerrá con «Cómo saber si estás progresando» en lenguaje simple)":""}
 ${bloqueNivel(nivelAtl)}
 ${isCicl?MTB_BLOCK:""}
-${REGLA_ESPANOL}
+${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}`;
 
@@ -1519,7 +1544,7 @@ Por cada semana:
 
 Por cada día de entrenamiento:
 ### [DÍA] — [SIT / RSS / HIIT / Pliometría / SSG / Fuerza / Recuperación]
-**Entrada en calor:** activación preventiva 15 min con drills específicos fútbol
+**Entrada en calor:** activación preventiva 15 min con ejercicios de técnica de fútbol
 **Parte principal:** [método Jovanovic] — N × [distancia/tiempo] al [%vel máx o RPE], pausa [tiempo] — clave: [técnica]
 **Vuelta a la calma:** trote suave 5-8 min + estiramientos musculatura específica
 **Carga:** X min | RPE: X/10

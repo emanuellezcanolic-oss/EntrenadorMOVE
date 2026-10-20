@@ -491,7 +491,7 @@ tr:hover td{background:var(--s2)}
 
       <!-- GENERAR PLAN -->
       <div class="page" id="page-generar">
-        <div class="ph"><div class="pt">⚡ Generador de Planes Elite</div><div class="ps">Head Coach IA · Metodología científica · Sin inventar datos</div></div>
+        <div class="ph"><div class="pt">⚡ Generador de Planes</div><div class="ps">Head Coach IA · Metodología científica · Sin inventar datos</div></div>
         <div style="display:grid;grid-template-columns:380px 1fr;gap:22px;align-items:start">
           <div>
             <!-- ATLETA -->
@@ -617,7 +617,7 @@ tr:hover td{background:var(--s2)}
           <div id="planOut">
             <div style="border:1px dashed var(--b1);padding:60px;text-align:center;color:var(--tx3)">
               <div style="font-size:44px;margin-bottom:14px">🏆</div>
-              <div style="font-family:var(--fd);font-size:22px;letter-spacing:2px;margin-bottom:6px">PLAN ELITE</div>
+              <div style="font-family:var(--fd);font-size:22px;letter-spacing:2px;margin-bottom:6px">GENERADOR DE PLANES</div>
               <div class="sm">Seleccioná atleta y presioná uno de los 4 botones</div>
             </div>
           </div>
@@ -1175,7 +1175,14 @@ function loadAtlData(){
   const a=getAtls().find(x=>x.id===id);if(!a)return;
   document.getElementById("planDep").value=a.dep||"Running";
   r.style.display="block";
-  r.innerHTML=`<strong>${a.nombre}</strong> · ${a.dep} · ${a.nivel}<br>Edad: ${edad(a.fnac)} · Peso: ${a.peso||"—"}kg · Alt: ${a.altura||"—"}cm<br>${a.vamK?`VAM: <strong style="color:var(--grl)">${a.vamK} km/h</strong> · `:""}${a.ftp?`FTP: <strong style="color:var(--grl)">${a.ftp}W</strong> · `:""}<br>Lesiones: ${a.lesiones||"Ninguna"}<br>Tests: ${(a.tests||[]).map(t=>t.type+": "+t.result).join(" | ")||"Sin tests"}`;
+  const faltan=[];
+  if(!a.fnac)faltan.push("fecha de nacimiento");
+  if(!a.peso)faltan.push("peso");
+  if(!((a.metricas||[]).some(x=>wtotal(x)>0)))faltan.push("registro de carga en Métricas");
+  const avisoDatos=faltan.length?`<div style="margin-top:7px;font-size:11px;color:#e67e22">⚠️ Falta cargar: ${faltan.join(", ")}. Sin esos datos el plan se arma con supuestos.</div>`:"";
+  const nv=(a.nivel||"Intermedio");
+  const colorNv=/^principiante/i.test(nv)?"#2ecc71":/^intermedio/i.test(nv)?"#3498db":"#e67e22";
+  r.innerHTML=`<div style="display:inline-block;margin-bottom:8px;padding:3px 9px;border-radius:4px;font-size:11px;letter-spacing:1px;background:${colorNv}22;border:1px solid ${colorNv}66;color:${colorNv}">EL PLAN SE ADAPTA A NIVEL: ${nv.toUpperCase()}</div><br><strong>${a.nombre}</strong> · ${a.dep} · ${a.nivel}<br>Edad: ${edad(a.fnac)} · Peso: ${a.peso||"—"}kg · Alt: ${a.altura||"—"}cm<br>${a.vamK?`VAM: <strong style="color:var(--grl)">${a.vamK} km/h</strong> · `:""}${a.ftp?`FTP: <strong style="color:var(--grl)">${a.ftp}W</strong> · `:""}<br>Lesiones: ${a.lesiones||"Ninguna"}<br>Tests: ${(a.tests||[]).map(t=>t.type+": "+t.result).join(" | ")||"Sin tests"}`+avisoDatos;
 }
 
 // Biblioteca de metodología basada en la literatura (citando autores/libros).

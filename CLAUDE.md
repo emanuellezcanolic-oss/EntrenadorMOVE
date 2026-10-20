@@ -112,6 +112,7 @@ arreglo estaba publicado y el navegador servía HTML viejo.
 | `REGLA_COHERENCIA` | 1354 | Los totales semanales deben cerrar |
 | `MTB_BLOCK` | 1362 | MTB vs ruta, desnivel como carga |
 | `bloqueMix(dep1,dep2)` | — | Plan combinado cuando se elige un segundo deporte (`#planDep2`) |
+| `bloqueContexto(ctx)` | — | Dónde y con qué entrena (`.ctxLugar` / `.ctxMat`). **Limita todo lo prescribible** |
 | `REGLA_COMPLETITUD` | 1374 | Todas las semanas con el detalle de la primera |
 
 ### Llamada al modelo
@@ -151,6 +152,8 @@ Lo verificable se chequea en JS, no se le pide al modelo por texto:
   normal, tipográfico (`‑ – —`) y espacio.
 - `auditarSumas()` compara el volumen declarado de cada semana contra la suma de
   las cargas de sus sesiones.
+- `auditarRecursos()` marca ejercicios imposibles para el contexto del atleta
+  (juego reducido si entrena solo, pesas sin gimnasio, pelota sin pelota).
 - `auditarPlan()` suma: semanas faltantes, jerga de potencia en nivel inicial,
   sesiones que se remiten a sí mismas.
 - `panelRevision()` lo muestra arriba del plan, con `no-print`.
@@ -201,8 +204,14 @@ Por orden de importancia:
 5. **Falta trabajo de fuerza** en los planes de resistencia, pese a estar en las
    bibliotecas: no está en el FORMATO ni en la cuenta `semanas × días`.
 6. **Deportes de campo**: `FIELD_SPORTS` incluye tenis, pádel y vóley, pero todo
-   el bloque está escrito para fútbol. Con el plan combinado esto se nota más:
-   un mix con pádel usa la rama de campo y le salen rondos.
+   el bloque está escrito para fútbol: a un plan de pádel le salían "pases de
+   fútbol". `bloqueContexto()` tapa lo peor (ya no manda juego reducido a quien
+   entrena solo), pero los deportes de raqueta siguen sin bloque propio.
+
+   **Contexto importante del club:** la mayoría de los socios entrenan **solos,
+   al aire libre, sin material**. El prompt asumía infraestructura de club y
+   prescribía juego reducido 3 vs 3 y sentadillas con carga. Por defecto las
+   casillas vienen en "Parque o aire libre" + "Sin material".
 7. `kbShort` (~línea 1535) se calcula y nunca se usa: la Biblioteca de Conocimiento
    del profesor se arma, se recorta y se tira.
 8. `mdToHtml` renderiza tablas pero no descarta la fila separadora `|---|---|`;

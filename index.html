@@ -528,6 +528,13 @@ tr:hover td{background:var(--s2)}
                   </optgroup>
                 </select>
               </div>
+              <div class="fg"><div class="fl">Dónde entrena</div>
+                <div><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Parque o aire libre" checked> Parque o aire libre</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Calle o vereda"> Calle o vereda</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Pista de atletismo"> Pista de atletismo</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Senderos o montaña"> Senderos o montaña</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Gimnasio"> Gimnasio</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Casa (poco espacio)"> Casa (poco espacio)</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Cancha o club"> Cancha o club</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxLugar" value="Pileta"> Pileta</label></div>
+              </div>
+              <div class="fg"><div class="fl">Con qué cuenta</div>
+                <div><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Sin material" checked> Sin material</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Bandas elásticas"> Bandas elásticas</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Mancuernas o pesas"> Mancuernas o pesas</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Soga"> Soga</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Conos o marcas"> Conos o marcas</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Pelota"> Pelota</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Compañeros para entrenar"> Compañeros para entrenar</label><label style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);margin:0 10px 6px 0;cursor:pointer"><input type="checkbox" class="ctxMat" value="Reloj con pulso"> Reloj con pulso</label></div>
+                <div style="font-size:11px;color:var(--tx3);margin-top:5px">El plan solo va a tener ejercicios que se puedan hacer con esto. Si entrena solo en un parque, no le va a mandar juego reducido ni gimnasio.</div>
+              </div>
               <div class="fg"><div class="fl">Segundo deporte (opcional)</div>
                 <select class="fc" id="planDep2">
                   <option value="">— solo el deporte principal —</option>
@@ -1216,7 +1223,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v12";
+const APP_VERSION="2026-10-20 · v13";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1392,6 +1399,39 @@ const REGLA_COHERENCIA=`
 - Nunca declares un volumen semanal menor que la suma de sus propias sesiones.
 - Las distancias tienen que ser coherentes con la duración y con la velocidad real del deporte y del terreno: en montaña se avanza mucho más lento que en ruta, y en subida más lento todavía.
 - El porcentaje 80/20 que declarás tiene que coincidir con el tiempo que realmente asignaste a esfuerzo suave y a esfuerzo fuerte esa semana.`;
+
+/* El plan le mandaba "juego reducido 3 vs 3" y "sentadilla con carga" a un
+   socio que entrena SOLO en un parque. El prompt asumía infraestructura de
+   club; ahora el contexto real limita todo lo que se puede prescribir. */
+function leerContexto(){
+  const g=c=>[...document.querySelectorAll("."+c+":checked")].map(x=>x.value);
+  return {lugares:g("ctxLugar"),material:g("ctxMat")};
+}
+function bloqueContexto(ctx){
+  const lug=(ctx.lugares||[]), mat=(ctx.material||[]);
+  if(!lug.length&&!mat.length)return "";
+  const tiene=x=>mat.indexOf(x)>=0, donde=x=>lug.indexOf(x)>=0;
+  const solo=!tiene("Compañeros para entrenar");
+  const sinMaterial=tiene("Sin material")||mat.filter(m=>m!=="Sin material"&&m!=="Reloj con pulso"&&m!=="Compañeros para entrenar").length===0;
+  const sinCancha=!donde("Cancha o club")&&!donde("Gimnasio");
+  let t=`
+📍 DÓNDE Y CON QUÉ ENTRENA — esto limita TODO el plan, por encima de cualquier metodología:
+- Lugar: ${lug.length?lug.join(", "):"no especificado"}
+- Dispone de: ${mat.length?mat.join(", "):"no especificado"}
+
+Antes de escribir cada ejercicio preguntate: ¿esta persona puede hacerlo hoy, en ese lugar y con eso? Si la respuesta es no, elegí otro que busque el mismo estímulo y sí se pueda.`;
+  if(solo)t+=`
+- ENTRENA SOLO. Todo lo que necesite rivales o compañeros queda afuera: nada de juego reducido, partidos de práctica, pases en parejas ni ejercicios de a dos. El mismo estímulo se logra en forma individual: ida y vuelta entre dos marcas, cambios de dirección y frenadas contra referencias del lugar, piques en cuesta, bloques intermitentes por tiempo (por ejemplo 15 segundos fuerte / 15 suave).`;
+  if(sinCancha)t+=`
+- NO HAY CANCHA NI GIMNASIO. El plan se hace con lo que ofrece la calle o el parque: distancias entre árboles o postes, bancos, escaleras, cuestas, el borde del cordón. Nombrá esas referencias concretas en los ejercicios.`;
+  if(sinMaterial)t+=`
+- SIN MATERIAL. La fuerza va a peso del cuerpo y aprovechando el lugar: sentadillas, estocadas, apoyos en banco, subidas de escalón, trabajo en cuesta, isométricos. Nada que necesite pesas, máquinas, conos, pelotas ni bandas.`;
+  if(donde("Casa (poco espacio)"))t+=`
+- ESPACIO CHICO EN CASA. Lo que se haga adentro tiene que entrar en pocos metros cuadrados y sin saltos ruidosos.`;
+  if(!tiene("Reloj con pulso"))t+=`
+- No tiene reloj con pulso: la intensidad se indica por sensación (RPE) y por la prueba de si puede hablar o no mientras se mueve.`;
+  return t;
+}
 
 /* Plan combinado: el atleta hace dos deportes y necesita UN plan, no dos
    pegados. Lo que más rompe un mix es apilar días duros de deportes
@@ -1646,6 +1686,8 @@ async function generarPlan(modo){
 
   const dep_clean=(document.getElementById("planDep")?.value||dep).replace(/[🏃⛰️🚴🚵🏊🏅🚣⛷️🚲🥾]/gu,"").trim();
   const dep2=(document.getElementById("planDep2")?.value||"").trim();
+  const ctx=leerContexto();
+  const entrenaSolo=ctx.material.indexOf("Compañeros para entrenar")<0;
   const isField=isFieldSport(dep_clean);
   const posicion=isField?(document.getElementById("planPosicion")?.value||""):"";
   const temporada=isField?(document.getElementById("planTemporada")?.value||"pretemporada"):"";
@@ -1699,6 +1741,7 @@ FORMATO:
 Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
+${bloqueContexto(ctx)}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}` 
@@ -1727,6 +1770,7 @@ FORMATO: texto por sesión, SIN tablas.
 Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR${esPrinc?" (en un principiante: NO incluyas tabla de zonas; cerrá con «Cómo saber si estás progresando» en lenguaje simple)":""}
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
+${bloqueContexto(ctx)}
 ${isCicl?MTB_BLOCK:""}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
@@ -1747,7 +1791,7 @@ ${notas?"NOTAS: "+notas:""}
 
 Generá plan completo ${sem} semanas para ${dep}.
 ⚠️ PROHIBIDO: series de 1000m, 2000m, rodajes continuos como trabajo principal.
-TODO el trabajo aeróbico debe ser INTERMITENTE o con metodología SSG.
+${entrenaSolo?"TODO el trabajo aeróbico debe ser INTERMITENTE y de ejecución INDIVIDUAL.":"TODO el trabajo aeróbico debe ser INTERMITENTE o con metodología de juego reducido."}
 
 Por cada semana:
 ## SEMANA X — [Ajuste/Control/Carga/Descarga]
@@ -1841,7 +1885,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
     const fix=corregirAnglicismos(txt);
     txt=fix.texto;
-    const avisos=auditarPlan(txt,{semanas:semN,dias:+dias,nivel:nivelAtl});
+    const avisos=auditarPlan(txt,{semanas:semN,dias:+dias,nivel:nivelAtl,lugares:ctx.lugares,material:ctx.material});
     window._revisionPlan=panelRevision(avisos,fix.cambios);
     const html=mdToHtml(txt);
     renderPlanOut(txt,html,a,dep,obj);
@@ -1853,7 +1897,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     // si ya se había generado parte del plan, no la tiramos: la mostramos igual
     if(err.parcial&&(contarSemanas(err.parcial)>0||err.parcial.trim().length>400)){
       const fx=corregirAnglicismos(err.parcial);
-      window._revisionPlan=panelRevision(auditarPlan(fx.texto,{semanas:parseInt(sem,10)||0,nivel:(a&&a.nivel)||""}),fx.cambios);
+      window._revisionPlan=panelRevision(auditarPlan(fx.texto,{semanas:parseInt(sem,10)||0,nivel:(a&&a.nivel)||"",lugares:ctx.lugares,material:ctx.material}),fx.cambios);
       const html=mdToHtml(fx.texto);
       renderPlanOut(fx.texto,html,a,dep,obj);
       if(aid)savePlanToAtl(aid,err.parcial,html,dep,obj);
@@ -2102,11 +2146,39 @@ function auditarSumas(txt){
   return av;
 }
 
+/* Chequea que el plan no prescriba cosas que el atleta no puede hacer.
+   Es verificable con regex, así que se comprueba en código. */
+function auditarRecursos(txt,ctx){
+  const av=[], mat=(ctx&&ctx.material)||[], lug=(ctx&&ctx.lugares)||[];
+  const tiene=x=>mat.indexOf(x)>=0, donde=x=>lug.indexOf(x)>=0;
+  const halla=re=>{const m=txt.match(re)||[];return [...new Set(m.map(x=>x.toLowerCase().trim()))]};
+  if(!tiene("Compañeros para entrenar")){
+    const g=halla(/juego reducido|\bSSG\b|\d\s*vs\s*\d|en parejas|con un compañer[oa]|rondo/gi);
+    if(g.length)av.push(`Entrena solo y el plan pide: ${g.join(", ")}.`);
+  }
+  if(!donde("Gimnasio")&&!tiene("Mancuernas o pesas")){
+    const g=halla(/mancuerna\w*|barra olímpica|press banca|máquina de \w+|peso muerto con barra|con carga moderada|gimnasio/gi);
+    if(g.length)av.push(`No tiene pesas ni gimnasio y el plan pide: ${g.join(", ")}.`);
+  }
+  if(!tiene("Conos o marcas")){
+    const g=halla(/\bconos?\b/gi);
+    if(g.length)av.push("El plan usa conos y no están entre el material disponible.");
+  }
+  if(!tiene("Pelota")){
+    const g=halla(/pelota|balón|pases de fútbol/gi);
+    if(g.length)av.push(`No tiene pelota y el plan pide: ${g.join(", ")}.`);
+  }
+  if(!tiene("Bandas elásticas")&&/banda\s+elástica/i.test(txt))av.push("El plan usa bandas elásticas y no están disponibles.");
+  if(!donde("Pileta")&&/\bpileta\b|\bnatación\b/i.test(txt))av.push("El plan incluye natación y no hay pileta disponible.");
+  return av;
+}
+
 function auditarPlan(txt,ctx){
   const av=[];
   const n=contarSemanas(txt);
   if(ctx.semanas&&n&&n<ctx.semanas) av.push(`Salieron ${n} de las ${ctx.semanas} semanas pedidas.`);
   av.push(...auditarSumas(txt));
+  av.push(...auditarRecursos(txt,ctx));
   if(/^principiante/i.test(ctx.nivel||"")){
     const j=txt.match(/\bFTP\b|\bTSS\b|\bVO2\s?m[áa]x\b|%\s*FC\s?m[áa]x|\bZ[1-5]\b|\bvatios\b|\bumbral\b/gi)||[];
     const u=[...new Set(j.map(x=>x.toUpperCase()))];

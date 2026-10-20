@@ -222,7 +222,43 @@ tr:hover td{background:var(--s2)}
   .peditable ul{margin:4px 0 4px 16px!important}
   .print-hdr{display:flex!important;align-items:center;padding-bottom:12px;border-bottom:3px solid #2d5a27;margin-bottom:18px;background:white!important}
   .card,.scard,.acard{background:white!important;border:1px solid #ddd!important;page-break-inside:avoid}
-  @page{margin:15mm;size:A4}
+  /* Al imprimir desde el generador solo tiene que salir el plan, no el
+     formulario de configuración ni el encabezado de la pantalla. */
+  #page-generar>.ph{display:none!important}
+  #page-generar>div[style*="grid"]{display:block!important}
+  #page-generar>div[style*="grid"]>div:first-child{display:none!important}
+  #planOut .peditor{border:none!important}
+  @page{margin:12mm;size:A4}
+}
+.ficha{font-size:13px;line-height:1.5}
+.fbases{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.fbx{flex:1;min-width:190px;border:1px solid var(--b1);background:var(--s2);border-radius:5px;padding:9px 12px}
+.fbx h4{margin:0 0 5px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--grl)}
+.fbx.ojo{border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.08)}
+.fbx.ojo h4{color:#e07a6b}
+.fbx ol{margin:0;padding-left:17px}
+.fbx li{margin-bottom:2px}
+.ftab{width:100%;border-collapse:collapse;margin:0}
+.fwk td{background:var(--grl);color:#fff;font-weight:700;letter-spacing:1.5px;font-size:13px;padding:5px 11px;border-radius:3px}
+.fwk span{float:right;font-weight:400;font-size:11px;opacity:.9;letter-spacing:.5px}
+.ftab th{width:62px;text-align:left;vertical-align:top;padding:6px 7px 6px 2px;font-size:13px;border-bottom:1px solid var(--b1);font-weight:600}
+.ftab th i{display:block;font-style:normal;font-weight:400;font-size:11px;color:var(--grl)}
+.fet{width:118px;vertical-align:top;padding:6px 9px 6px 0;font-size:11px;color:var(--tx3);text-align:right;border-bottom:1px solid var(--b1);line-height:1.55;white-space:nowrap}
+.fco{vertical-align:top;padding:6px 0 6px 10px;border-bottom:1px solid var(--b1);border-left:2px solid var(--b1);line-height:1.55}
+.fnota{color:var(--tx3);font-style:italic}
+@media print{
+  .ficha{font-size:9pt;line-height:1.38;color:#000}
+  .fbx{background:#f7faf6!important;border-color:#cfd8cd!important;padding:6px 9px}
+  .fbx h4{color:#2d5a27!important;font-size:8.5pt}
+  .fbx.ojo{background:#fdf4f3!important;border-color:#edc9c4!important}
+  .fbx.ojo h4{color:#a93226!important}
+  .fwk td{background:#2d5a27!important;font-size:10pt;padding:4px 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ftab th,.fet,.fco{border-bottom:1px solid #e4e4e4!important;padding-top:4px;padding-bottom:4px}
+  .ftab th i{color:#3d7a35!important}
+  .fet{color:#7a7a7a!important;font-size:8pt;width:104px}
+  .fco{border-left:2px solid #e8efe6!important}
+  .fnota{color:#777!important}
+  .ftab tr{page-break-inside:avoid}
 }
 .print-hdr{display:none}
 </style>
@@ -1223,7 +1259,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v13";
+const APP_VERSION="2026-10-20 · v14";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1399,6 +1435,92 @@ const REGLA_COHERENCIA=`
 - Nunca declares un volumen semanal menor que la suma de sus propias sesiones.
 - Las distancias tienen que ser coherentes con la duración y con la velocidad real del deporte y del terreno: en montaña se avanza mucho más lento que en ruta, y en subida más lento todavía.
 - El porcentaje 80/20 que declarás tiene que coincidir con el tiempo que realmente asignaste a esfuerzo suave y a esfuerzo fuerte esa semana.`;
+
+/* ─────── FORMATO DE FICHA ───────
+   La estructura del plan no se deja librada a cómo el modelo decida escribir:
+   se le pide un formato estricto, línea por línea, y la app lo dibuja. Si el
+   modelo se sale del formato, se cae al render de markdown de siempre. */
+const FORMATO_FICHA=`
+FORMATO DE SALIDA — respetalo EXACTAMENTE, línea por línea. No escribas nada fuera de este formato: ni introducción, ni comentarios, ni cierre.
+
+# BASES
+EC | paso 1 | paso 2 | paso 3 | paso 4
+AF | paso 1 | paso 2
+OJO | cuidado 1 | cuidado 2 | cuidado 3
+
+# SEMANA 1 | duración total de la semana | dos palabras que la definan
+DIA | A | duración del día
+EC | minutos | la de siempre
+PR | minutos | el trabajo de ese día, en una sola línea
+NOTA | una acotación corta
+AF | minutos | el de siempre
+DIA | B | duración del día
+...
+
+CÓMO FUNCIONA:
+- BASES va una sola vez, al principio: la entrada en calor (EC), el afloje (AF) y los cuidados (OJO) que valen para todos los días.
+- Los días se llaman A, B, C en ese orden. Nunca lunes, martes ni miércoles.
+- EC + PR + AF tienen que sumar exactamente la duración del día. Sumá antes de escribir.
+- PR es UNA línea. Si hay varios bloques, separalos con el signo · en la misma línea.
+- NOTA es opcional, una línea, y solo donde aporte algo. No la pongas en todos los días.
+- Si ese día la entrada en calor cambia, describila en vez de poner "la de siempre".
+- Sin asteriscos, sin negritas, sin viñetas, sin tablas.
+
+EJEMPLO de un día bien escrito:
+DIA | B | 30'
+EC | 10' | la de siempre
+PR | 15' | 12' de trote suave + 6 aceleraciones de 20 m, volviendo caminando
+NOTA | las aceleraciones no son piques al máximo: subís el ritmo y aflojás
+AF | 5' | el de siempre`;
+
+/* Convierte el texto del modelo en una estructura. Devuelve null si no vino
+   en formato ficha, para poder caer al render de siempre. */
+function parsearFicha(txt){
+  const out={bases:{ec:[],af:[],ojo:[]},semanas:[]};
+  let sem=null, dia=null;
+  String(txt).split(/\r?\n/).forEach(linea=>{
+    const l=linea.trim(); if(!l)return;
+    const m=l.match(/^#{1,3}\s*SEMANA\s*(\d+)\s*(?:[|–—-]\s*([^|]*))?(?:[|–—-]\s*(.*))?$/i);
+    if(m){ sem={n:+m[1],total:(m[2]||"").trim(),etiqueta:(m[3]||"").trim(),dias:[]}; out.semanas.push(sem); dia=null; return; }
+    if(/^#{1,3}\s*BASES/i.test(l)){ sem=null; dia=null; return; }
+    const c=l.split("|").map(x=>x.trim());
+    const tag=(c[0]||"").toUpperCase().replace("Í","I");
+    if(tag==="DIA"&&sem){ dia={letra:c[1]||"",total:c[2]||"",ec:null,pr:[],nota:"",af:null}; sem.dias.push(dia); return; }
+    if(tag==="EC"){ dia?dia.ec={min:c[1]||"",txt:c.slice(2).join(" · ")}:out.bases.ec=c.slice(1).filter(Boolean); return; }
+    if(tag==="AF"){ dia?dia.af={min:c[1]||"",txt:c.slice(2).join(" · ")}:out.bases.af=c.slice(1).filter(Boolean); return; }
+    if(tag==="OJO"&&!dia){ out.bases.ojo=c.slice(1).filter(Boolean); return; }
+    if(tag==="PR"&&dia){ dia.pr.push({min:c[1]||"",txt:c.slice(2).join(" · ")}); return; }
+    if(tag==="NOTA"&&dia){ dia.nota=c.slice(1).join(" "); return; }
+  });
+  const dias=out.semanas.reduce((n,s)=>n+s.dias.length,0);
+  return (out.semanas.length&&dias)?out:null;
+}
+
+function esc(t){return String(t||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+function renderFicha(f){
+  const caja=(t,items,cls)=>items&&items.length
+    ? `<div class="fbx ${cls||""}"><h4>${esc(t)}</h4><ol>${items.map(i=>"<li>"+esc(i)+"</li>").join("")}</ol></div>`:"";
+  const bases=`<div class="fbases">
+    ${caja("Entrada en calor",f.bases.ec)}
+    ${caja("Afloje",f.bases.af)}
+    ${caja("Tener en cuenta",f.bases.ojo,"ojo")}
+  </div>`;
+  const semanas=f.semanas.map(s=>{
+    const filas=s.dias.map(d=>{
+      const et=[], co=[];
+      if(d.ec){et.push("Entrada en calor "+esc(d.ec.min));co.push(esc(d.ec.txt))}
+      d.pr.forEach(x=>{et.push("Principal "+esc(x.min));co.push("<b>"+esc(x.txt)+"</b>")});
+      if(d.nota)co[co.length-1]=(co[co.length-1]||"")+' <span class="fnota">— '+esc(d.nota)+"</span>";
+      if(d.af){et.push("Afloje "+esc(d.af.min));co.push(esc(d.af.txt))}
+      return `<tr><th>Día ${esc(d.letra)}<i>${esc(d.total)}</i></th>
+        <td class="fet">${et.join("<br>")}</td><td class="fco">${co.join("<br>")}</td></tr>`;
+    }).join("");
+    const der=[s.total,s.etiqueta].filter(Boolean).join(" · ");
+    return `<tr class="fwk"><td colspan="3">SEMANA ${s.n}${der?'<span>'+esc(der)+'</span>':''}</td></tr>`+filas;
+  }).join("");
+  return `<div class="ficha">${bases}<table class="ftab">${semanas}</table></div>`;
+}
 
 /* El plan le mandaba "juego reducido 3 vs 3" y "sentadilla con carga" a un
    socio que entrena SOLO en un parque. El prompt asumía infraestructura de
@@ -1729,16 +1851,7 @@ PERIODIZACIÓN por temporada:
 - En temporada: 30% físico + 70% técnico-táctico con carga física integrada, recuperación post-partido
 - Postemporada: recuperación activa, regeneración, trabajo compensatorio
 
-FORMATO:
-## SEMANA X — [Tipo microciclo]
-**Objetivo:** [adaptación fisiológica] | **Carga total:** X min | **Foco:** [piques/piques repetidos/juego reducido/fuerza]
-### [DÍA — Tipo sesión]
-**Entrada en calor:** [15 min — ejercicios de técnica específicos]
-**Parte principal:** [método + series × duración/distancia + intensidad + pausa]
-**Vuelta a la calma:** [trote suave + estiramientos]
-**Carga:** X min | **RPE:** X/10
-[Días libres: DESCANSO ACTIVO o recuperación post-partido]
-Al final: ## DISTRIBUCIÓN ENERGÉTICA, ## PROGRESIÓN ACWR
+${FORMATO_FICHA}
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
@@ -1761,13 +1874,7 @@ ESTRUCTURA DE CADA SESIÓN:
 **Carga:** km totales | RPE: X/10 | Zona: Z[X]
 ${isTrail?"TRAIL: incluir D+ estimado, tipo terreno, técnica subida (cadencia corta 85-90spm) y bajada (excéntrico)":""}
 
-FORMATO: texto por sesión, SIN tablas.
-## SEMANA X — [Tipo]
-**Objetivo:** ... | **Volumen:** X km | **Distribución:** X% Z1-Z2 / X% Z3+
-### [DÍA — tipo sesión]
-[Entrada en calor / Parte principal / Vuelta a la calma / Carga]
-[Días libres: DESCANSO ACTIVO — movilidad 15 min]
-Al final: ## ZONAS PERSONALIZADAS, ## PROGRESIÓN ACWR${esPrinc?" (en un principiante: NO incluyas tabla de zonas; cerrá con «Cómo saber si estás progresando» en lenguaje simple)":""}
+${FORMATO_FICHA}
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
@@ -1887,7 +1994,8 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     txt=fix.texto;
     const avisos=auditarPlan(txt,{semanas:semN,dias:+dias,nivel:nivelAtl,lugares:ctx.lugares,material:ctx.material});
     window._revisionPlan=panelRevision(avisos,fix.cambios);
-    const html=mdToHtml(txt);
+    const ficha=parsearFicha(txt);
+    const html=ficha?renderFicha(ficha):mdToHtml(txt);
     renderPlanOut(txt,html,a,dep,obj);
     if(aid)savePlanToAtl(aid,txt,html,dep,obj);
   }catch(err){
@@ -1898,7 +2006,8 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     if(err.parcial&&(contarSemanas(err.parcial)>0||err.parcial.trim().length>400)){
       const fx=corregirAnglicismos(err.parcial);
       window._revisionPlan=panelRevision(auditarPlan(fx.texto,{semanas:parseInt(sem,10)||0,nivel:(a&&a.nivel)||"",lugares:ctx.lugares,material:ctx.material}),fx.cambios);
-      const html=mdToHtml(fx.texto);
+      const fi=parsearFicha(fx.texto);
+      const html=fi?renderFicha(fi):mdToHtml(fx.texto);
       renderPlanOut(fx.texto,html,a,dep,obj);
       if(aid)savePlanToAtl(aid,err.parcial,html,dep,obj);
       notify("Plan incompleto ("+contarSemanas(err.parcial)+" semanas): "+err.message,"err");
@@ -2202,6 +2311,26 @@ function panelRevision(avisos,corregidos){
     <ul style="margin:7px 0 0 16px;padding:0">${items.join("")}</ul></div>`;
 }
 
+/* El membrete solo existía en la pantalla del atleta: imprimir desde el
+   generador salía sin logo, sin nombre y sin fecha. */
+function cabeceraImpresion(a,dep,obj){
+  const img=document.querySelector(".print-hdr img");
+  const src=img?img.getAttribute("src"):"";
+  const hoy=new Date().toLocaleDateString("es-AR");
+  return `<div class="print-hdr">
+    ${src?`<img src="${src}" style="width:52px;height:52px;object-fit:contain">`:""}
+    <div style="margin-left:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px">THE MOVE CLUB</div>
+      <div style="font-size:11px;color:#666;letter-spacing:2px">PLAN DE ENTRENAMIENTO</div>
+    </div>
+    <div style="margin-left:auto;text-align:right;font-size:12px">
+      <div style="font-weight:700;font-size:16px">${esc(a?a.nombre:"")}</div>
+      <div style="color:#666">${esc(dep||"")}${obj?" · "+esc(obj):""}</div>
+      <div style="color:#666">${hoy} · Prof. ${esc((typeof CU!=="undefined"&&CU&&CU.name)||"")}</div>
+    </div>
+  </div>`;
+}
+
 function renderPlanOut(txt,html,a,dep,obj){
   document.getElementById("planOut").innerHTML=`
     <div class="peditor">
@@ -2212,6 +2341,7 @@ function renderPlanOut(txt,html,a,dep,obj){
         <button class="btn btn-s btn-sm" style="background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.4);color:#25d366" onclick="copiarWhatsApp()">💬 WhatsApp</button>
         ${a?`<button class="btn btn-p btn-sm" onclick="openDetail('${a.id}')">Ver atleta →</button>`:""}
       </div>
+      ${cabeceraImpresion(a,dep,obj)}
       ${window._revisionPlan||""}
       <div class="peditable" id="planEditable" contenteditable="true">${html}</div>
     </div>`;

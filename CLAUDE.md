@@ -144,6 +144,34 @@ Bajar el tamaño del prompt de entrada (hoy ~2800-3600 tokens) es lo que más
 aceleraría los planes largos: cada token de entrada que se recorta deja lugar
 para más semanas por llamada.
 
+### Formato de ficha
+
+El plan ya no se renderiza desde markdown libre. Al modelo se le pide un formato
+estricto, línea por línea (`FORMATO_FICHA`), y la app lo dibuja:
+
+```
+# BASES
+EC | paso | paso | paso          AF | paso | paso          OJO | cuidado | cuidado
+# SEMANA 1 | 1 h 40 | reconocer
+DIA | A | 30'
+EC | 10' | la de siempre
+PR | 15' | 15' de trote suave continuo
+NOTA | ritmo de poder hablar de corrido
+AF | 5' | el de siempre
+```
+
+- `parsearFicha(txt)` devuelve la estructura, o `null` si el modelo no respetó el
+  formato; ahí se cae a `mdToHtml()` como antes. **Nunca quites ese respaldo.**
+- `renderFicha(obj)` arma el HTML: tres cajas arriba (entrada en calor, afloje,
+  cuidados) y una tabla por semana con Día A/B/C, los tiempos a la izquierda y el
+  trabajo a la derecha. Estilos `.ficha` / `.fbx` / `.fwk` / `.fet` / `.fco`, con
+  su bloque `@media print` en claro.
+- `cabeceraImpresion()` agrega el membrete al imprimir desde el generador: antes
+  el `.print-hdr` solo existía en la pantalla del atleta y el plan salía sin logo
+  ni nombre. El `@media print` también oculta el formulario de configuración.
+- **Los días se llaman A, B, C**, no lunes/martes: el socio los acomoda en su
+  semana.
+
 ### Revisión automática de la salida (línea ~1973)
 
 Lo verificable se chequea en JS, no se le pide al modelo por texto:

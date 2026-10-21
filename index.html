@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v15";
+const APP_VERSION="2026-10-21 · v16";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1445,6 +1445,17 @@ const REGLA_COHERENCIA=`
    nombre propio y estímulo distinto, microciclos que no van siempre en el
    mismo orden, volumen que sube y baja, y eventos sociales metidos en el
    calendario para sostener la adherencia. */
+const ADHERENCIA_LIB=`BIBLIOTECA — VARIACIÓN Y ADHERENCIA (esto es TU fundamento como entrenador; NO nombres a estos autores dentro del plan):
+MONOTONÍA (Foster, 1998): la monotonía del entrenamiento —días todos parecidos, poca variación de carga dentro de la semana— se asocia a enfermedad y sobreentrenamiento. Variar día a día no es decoración: es parte del control de la carga.
+CARGA ONDULANTE (Rhea y cols., 2002, en fuerza): ondular la carga rinde más que subirla de forma lineal. Fuera de la fuerza hay que extrapolar con cuidado, pero el principio de alternar estímulos se sostiene.
+CARGA CONCENTRADA (Verkhoshansky; Issurin): la semana de choque concentra el estímulo y se paga con una descarga planificada. Sin esa descarga, el choque es solo fatiga acumulada.
+SALTOS DE CARGA (Gabbett, 2016; Nielsen, 2014): lo que lastima es el salto brusco, no el volumen alto en sí. Progresión con altibajos y descargas, no una rampa continua.
+ABANDONO (Dishman): cerca de la mitad de quienes empiezan un programa lo dejan en los primeros seis meses. Un plan que no se cumple no sirve por más correcto que esté.
+MOTIVACIÓN (Deci y Ryan; Teixeira y cols., 2012): la adherencia sostenida se apoya en autonomía (poder elegir), competencia (ver que progresás) y vínculo (entrenar con otros). Las alternativas, los tests y las salidas en grupo cubren esas tres.
+GRUPO (Burke y cols., 2006): entrenar acompañado mejora la adherencia frente a entrenar solo.
+DISFRUTE (Williams y cols., 2008; Rhodes y Kates, 2015): cómo se siente la persona DURANTE la sesión predice si va a seguir entrenando meses después. Una sesión que se disfruta vale más que una perfecta que se abandona.
+INTENCIONES DE IMPLEMENTACIÓN (Gollwitzer y Sheeran, 2006): dejar escrito de antemano "si pasa X, hago Y" aumenta mucho la probabilidad de cumplir. Por eso cada sesión difícil lleva su versión alternativa.`;
+
 const REPERTORIO=`
 🎛️ REPERTORIO DE SESIONES — cada día lleva NOMBRE y un estímulo distinto. Elegí del repertorio según lo que toque:
 - Fraccionado: N × distancia fuerte con pausa definida (6 × 500 m, pausa 1'30).
@@ -1463,14 +1474,15 @@ const REPERTORIO=`
 - Doble turno: dos sesiones el mismo día. Solo en semana de choque y con nivel para bancarlo.`;
 
 const REGLA_DINAMISMO=`
-🔀 QUE NO PAREZCA UNA PLANILLA:
-1. Cada día de la semana tiene un estímulo DISTINTO y su nombre propio. Nunca dos días seguidos del mismo tipo.
-2. Los microciclos no van siempre en el mismo orden. Combiná Ajuste, Control, Carga, Choque, Descarga y Mantenimiento según lo que pida el bloque. El Choque es la semana pico; la Descarga baja 20-25%.
-3. El volumen NO sube en escalones iguales. Puede subir, sostenerse, bajar y volver a subir. Dos semanas seguidas con el mismo incremento es una planilla, no un plan.
-4. Dentro de un mismo tipo de sesión, cambiá la receta entre semanas: la distancia de las series, la pausa, el terreno, el sentido, el orden de los bloques.
-5. ADHERENCIA — cada 3 o 4 semanas meté algo que dé ganas de ir: una salida en grupo, una sesión en un lugar distinto, una salida larga sin reloj, un test para ver cómo viene, o una carrera corta como objetivo intermedio. Ponele nombre en el plan.
+🔀 QUE NO PAREZCA UNA PLANILLA — cada regla tiene su fundamento:
+1. Cada día de la semana, un estímulo DISTINTO y con nombre propio. Nunca dos días seguidos del mismo tipo. La monotonía no es solo aburrida: se asocia a enfermedad y sobreentrenamiento.
+2. Los microciclos no van siempre en el mismo orden. Combiná Ajuste, Control, Carga, Choque, Descarga y Mantenimiento según lo que pida el bloque. El Choque concentra el estímulo y SIEMPRE se paga con la Descarga siguiente, que baja 20-25%.
+3. El volumen NO sube en escalones iguales: sube, se sostiene, baja y vuelve a subir. Lo que lastima es el salto brusco, no el volumen alto. Dos semanas seguidas con el mismo incremento es una planilla, no un plan.
+4. Dentro de un mismo tipo de sesión, cambiá la receta entre semanas: distancia de las series, pausa, terreno, sentido, orden de los bloques.
+5. ADHERENCIA — la mitad de los que empiezan abandonan en seis meses, y lo que predice que sigan es cómo la pasan durante la sesión. Cada 3 o 4 semanas poné algo que dé ganas de ir: una salida en grupo, una sesión en otro lugar, una larga sin reloj, un test para ver el progreso, o una carrera corta como objetivo intermedio. Ponele nombre.
 6. Una sesión fácil de verdad por semana. Y el día de descanso dice descanso, sin tarea.
-7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Así no se pierde la semana.`;
+7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Tener decidido de antemano qué hacer cuando algo sale mal es lo que evita que se pierda la semana entera.`;
+
 
 /* ─────── FORMATO DE FICHA ───────
    La estructura del plan no se deja librada a cómo el modelo decida escribir:
@@ -1735,6 +1747,12 @@ function planificarTramos(semN,dias,tokEntrada){
 function salidaParaTramo(semanas,porSem,esPrimero){
   return Math.min(TOPE_SALIDA,Math.ceil(semanas*porSem*1.4)+(esPrimero?500:0));
 }
+/* El techo real lo pone el límite por minuto: pedir más de lo que entra
+   garantiza un 429 y una espera. Se recorta contra la entrada real. */
+function salidaQueEntra(deseada,sys,user){
+  const libre=MARGEN_TPM-estTok(sys)-estTok(user)-120;
+  return Math.max(900,Math.min(deseada,libre));
+}
 
 
 function ultimaSemanaDe(t){
@@ -1748,8 +1766,9 @@ function soloSemanas(t){
   return m && m.index>0 ? t.slice(m.index) : t;
 }
 
-async function generarPorTramos(systemPrompt,userBase,semN,onProgress,dias){
-  const plan=planificarTramos(semN,dias,estTok(systemPrompt)+estTok(userBase)+500);
+async function generarPorTramos(systemPrompt,userBase,semN,onProgress,dias,systemCont){
+  const sysCont=systemCont||systemPrompt;
+  const plan=planificarTramos(semN,dias,estTok(sysCont)+estTok(userBase)+500);
   const tramos=plan.tramos;
   let full="", estrategia="", ultima="";
   for(let i=0;i<tramos;i++){
@@ -1777,9 +1796,9 @@ Al terminar la semana ${semN}, cerrá el plan con las secciones finales.`:`
 NO cierres el plan todavía.`}`;
     }
     const parte=await groqChat(
-      [{role:"system",content:systemPrompt},{role:"user",content:up}],
+      [{role:"system",content:i===0?systemPrompt:sysCont},{role:"user",content:up}],
       acc=>onProgress(full+"\n"+acc,desde,hasta),
-      salidaParaTramo(hasta-desde+1,plan.porSem,i===0)
+      salidaQueEntra(salidaParaTramo(hasta-desde+1,plan.porSem,i===0),i===0?systemPrompt:sysCont,up)
     );
     const limpio=(i===0?parte:soloSemanas(parte)).trim();
     if(!limpio)continue;
@@ -1897,6 +1916,7 @@ ${FORMATO_FICHA}
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
+${ADHERENCIA_LIB}
 ${REGLA_DINAMISMO}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
@@ -1922,6 +1942,7 @@ ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
 ${isCicl?MTB_BLOCK:""}
+${ADHERENCIA_LIB}
 ${esPrinc?"":REPERTORIO}
 ${REGLA_DINAMISMO}
 ${reglaEspanol(isCicl,isField,dep_clean)}
@@ -2028,11 +2049,17 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
       const n=Math.max(contarSemanas(acc),desde?desde-1:0);
       showLoading(semN?`Escribiendo el plan... semana ${Math.min(n||desde||1,semN)} de ${semN} ⚡`:"Generando con IA científica... ⚡");
     };
-    const plan0=planificarTramos(semN||1,dias,estTok(systemPrompt)+estTok(userPrompt)+500);
+    // Los bloques de bibliografía fundamentan el plan, pero una vez definida
+    // la estrategia no hace falta repetirlos en cada tramo.
+    let systemCont=systemPrompt;
+    [libBlock, esPrinc?"":REPERTORIO, ADHERENCIA_LIB].forEach(bl=>{
+      if(bl) systemCont=systemCont.split(bl).join("");
+    });
+    const plan0=planificarTramos(semN||1,dias,estTok(systemCont)+estTok(userPrompt)+500);
     let txt = (modo==="nuevo"&&plan0.tramos>1)
-      ? await generarPorTramos(systemPrompt,userPrompt,semN,prog,dias)
+      ? await generarPorTramos(systemPrompt,userPrompt,semN,prog,dias,systemCont)
       : await groqChat([{role:"system",content:systemPrompt},{role:"user",content:userPrompt}],
-          acc=>prog(acc), salidaParaTramo(semN||1,plan0.porSem,true));
+          acc=>prog(acc), salidaQueEntra(salidaParaTramo(semN||1,plan0.porSem,true),systemPrompt,userPrompt));
     hideLoading();
     if(!txt.trim()){notify("La IA devolvió una respuesta vacía. Reintentá.","err");return}
     const fix=corregirAnglicismos(txt);

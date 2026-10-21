@@ -144,7 +144,18 @@ Bajar el tamaño del prompt de entrada (hoy ~2800-3600 tokens) es lo que más
 aceleraría los planes largos: cada token de entrada que se recorta deja lugar
 para más semanas por llamada.
 
-### Dinamismo (planificación 2022 del club)
+### Dinamismo (planificación 2022 del club) — con su evidencia
+
+`ADHERENCIA_LIB` es el fundamento: monotonía y sobreentrenamiento (Foster 1998),
+carga ondulante (Rhea 2002), carga concentrada y descarga (Verkhoshansky,
+Issurin), saltos de carga como causa de lesión (Gabbett 2016, Nielsen 2014),
+abandono ~50% a seis meses (Dishman), autonomía-competencia-vínculo (Deci y
+Ryan, Teixeira 2012), grupo (Burke 2006), disfrute durante la sesión como
+predictor de adherencia (Williams 2008, Rhodes y Kates 2015) e intenciones de
+implementación (Gollwitzer y Sheeran 2006), que es lo que respalda la línea
+`ALT`. Como las demás bibliotecas, **los autores no se nombran dentro del plan**.
+
+`REGLA_DINAMISMO` enuncia cada regla con su porqué, no como capricho de estilo.
 
 `REPERTORIO` y `REGLA_DINAMISMO` salen de la planilla real de 2022 del club
 (22 microciclos, niveles A/B/C en paralelo). Lo que la hacía viva y el prompt no
@@ -169,7 +180,15 @@ tenía:
   que escribir "online"**: eso era del contexto 2020-2022.
 
 El repertorio no se manda a principiantes (`esPrinc`): para alguien que empieza,
-la variedad de estímulos es ruido.
+la variedad de estímulos es ruido. La biblioteca de adherencia sí va siempre.
+
+**Las bibliotecas pesadas viajan solo en la primera llamada.** Sumarlas llevó el
+prompt de ~2800 a ~4265 tokens y duplicó las llamadas (un plan de 4 semanas
+volvió a necesitar dos, y uno de 12×6 pasó a doce). `generarPorTramos` recibe un
+`systemCont` sin `libBlock`, `REPERTORIO` ni `ADHERENCIA_LIB` para los tramos
+siguientes: ~3100 en vez de ~4265. Además `salidaQueEntra()` recorta el
+`max_tokens` de cada llamada contra la entrada real, de modo que entrada +
+salida nunca pase `MARGEN_TPM`. Sin ese tope la primera llamada se iba a 8265.
 
 ### Formato de ficha
 

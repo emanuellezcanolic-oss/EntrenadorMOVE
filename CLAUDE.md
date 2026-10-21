@@ -125,7 +125,7 @@ arreglo estaba publicado y el navegador servía HTML viejo.
   de 12 semanas.
 - `planificarTramos(semN,dias,tokEntrada)`: **el tamaño del tramo no es fijo.** Se
   calcula para meter la mayor cantidad de semanas que entren en una llamada sin
-  pasar `MARGEN_TPM`, estimando ~200 tokens por sesión. `salidaParaTramo()` fija
+  pasar `MARGEN_TPM`, estimando ~130 tokens por sesión (una sesión en formato ficha ocupa ~60; el resto es margen). `salidaParaTramo()` fija
   el `max_tokens` de esa llamada en lugar de reservar un número fijo. Un plan de
   4 semanas × 3 días sale en **una** llamada sin esperas; uno de 12 × 6 en cuatro.
 - `pedirAGroq()`: reintenta ante un 429 esperando lo que el propio error indica,
@@ -202,6 +202,24 @@ volvió a necesitar dos, y uno de 12×6 pasó a doce). `generarPorTramos` recibe
 para los tramos siguientes: ~3100 en vez de ~4265. Además `salidaQueEntra()` recorta el
 `max_tokens` de cada llamada contra la entrada real, de modo que entrada +
 salida nunca pase `MARGEN_TPM`. Sin ese tope la primera llamada se iba a 8265.
+
+### Para quién es el plan
+
+`REGLA_DESTINATARIO`. **La planilla A/B/C del club es documento del profesor; el
+socio nunca la ve.** Los tres niveles existen para que el profe clasifique. Lo
+que la app entrega es el plan de UN socio, a SU dosis.
+
+Por eso la nomenclatura de planificación no va adentro del plan: microciclo,
+mesociclo, ajuste/control/carga/choque/descarga, ACWR, TSS, umbral, VO2,
+porcentajes de distribución, autores y citas. El rótulo de cada semana dice lo
+que le pasa al socio ("arrancamos", "la más fuerte del mes", "aflojamos para
+asimilar"), no el nombre técnico del microciclo.
+
+`auditarJergaDeProfe()` lo verifica sobre la salida: vocabulario técnico,
+semanas rotuladas con el nombre del microciclo, y citas bibliográficas.
+
+El material de ACWR y carga sí vive en la app, pero en el panel del profesor
+(Control de Carga, pestaña Métricas), que es donde corresponde.
 
 ### Formato de ficha
 

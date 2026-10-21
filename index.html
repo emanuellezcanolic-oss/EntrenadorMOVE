@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v17";
+const APP_VERSION="2026-10-21 · v18";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1499,6 +1499,16 @@ const REGLA_DINAMISMO=`
 7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Tener decidido de antemano qué hacer cuando algo sale mal es lo que evita que se pierda la semana entera.`;
 
 
+/* Lo que sale de la app se lo entrega el profe AL SOCIO. Toda la
+   nomenclatura de planificación (microciclos, ACWR, mesociclos, zonas) es
+   andamiaje del entrenador: sirve para construir el plan, no va adentro. */
+const REGLA_DESTINATARIO=`
+👤 ESTE DOCUMENTO SE LO DAN AL SOCIO, no es la planilla del entrenador. Él necesita saber qué hace cada día, cuánto dura y cómo tiene que sentirse.
+La nomenclatura de planificación es andamiaje tuyo y adentro del plan NO aparece: microciclo, mesociclo, ajuste, control, carga, choque, descarga, ACWR, TSS, umbral, VO2, porcentajes de distribución, autores ni citas.
+Para describir una semana decí lo que le pasa a él: "arrancamos", "subimos un escalón", "la más fuerte del mes", "aflojamos para asimilar", "medimos cómo venís".
+Si algo no le cambia lo que va a hacer mañana, no va.`;
+
+
 /* ─────── FORMATO DE FICHA ───────
    La estructura del plan no se deja librada a cómo el modelo decida escribir:
    se le pide un formato estricto, línea por línea, y la app lo dibuja. Si el
@@ -1511,7 +1521,7 @@ EC | paso 1 | paso 2 | paso 3 | paso 4
 AF | paso 1 | paso 2
 OJO | cuidado 1 | cuidado 2 | cuidado 3
 
-# SEMANA 1 | duración total de la semana | dos palabras que la definan
+# SEMANA 1 | duración total de la semana | qué le pasa al socio esa semana, en palabras comunes
 DIA | A | duración del día | nombre de la sesión
 EC | minutos | la de siempre
 PR | minutos | el trabajo de ese día, en una sola línea
@@ -1753,7 +1763,8 @@ const TOPE_SALIDA=4000;
 const estTok=t=>Math.ceil(String(t||"").length/3.4);
 
 function planificarTramos(semN,dias,tokEntrada){
-  const porSem=Math.max(350,(+dias||4)*200);          // ~200 tokens por sesión
+  // Una sesión en formato ficha ocupa ~60 tokens; 130 deja el doble de margen.
+  const porSem=Math.max(300,(+dias||4)*130);
   const disponible=Math.max(900,MARGEN_TPM-tokEntrada);
   const maxSem=Math.max(1,Math.floor(disponible/porSem));
   const semPorTramo=Math.max(1,Math.min(semN,maxSem,6));
@@ -1898,6 +1909,8 @@ async function generarPlan(modo){
 
   const systemPrompt = isField ? `Sos el preparador físico del club The Move Club (Argentina). Generás planes para DEPORTES DE CAMPO (fútbol, básquet, hockey, etc.). Solo el plan, sin introducciones.
 
+${REGLA_DESTINATARIO}
+
 ⚠️ REGLA ABSOLUTA: Este es un deporte de campo, NO running. PROHIBIDO generar series de 1000m, 2000m, ni rodajes continuos como método principal. El trabajo aeróbico se hace con pelota o en circuitos intermitentes.
 
 BASES CIENTÍFICAS OBLIGATORIAS PARA DEPORTES DE CAMPO:
@@ -1939,6 +1952,7 @@ ${REGLA_COMPLETITUD}`
 
 : `Sos el Head Coach de The Move Club (Argentina). Solo el plan, sin introducciones.
 REGLA: No inventás datos. Todo basado en ciencia validada.
+${REGLA_DESTINATARIO}
 
 RESISTENCIA: Daniels (VDOT/zonas), Seiler (80/20 polarizado), Pfitzinger (volumen), Koop (trail), Friel (TSS/CTL), House-Johnston (Uphill Athlete), Gabbett (ACWR 0.8-1.3).
 PERIODIZACIÓN: Microciclos Ajuste→Control→Carga→Descarga (3:1). Z1=suave Z2=ligero Z3=algo duro Z4=duro Z5=máximo. Si no hay VAM/FTP: rangos por nivel, nunca inventar valores.
@@ -2370,12 +2384,30 @@ function auditarRecursos(txt,ctx){
   return av;
 }
 
+/* El plan es para el socio: la nomenclatura de planificación no va adentro.
+   Pedirlo por prompt no alcanza, así que se verifica. */
+function auditarJergaDeProfe(txt){
+  const av=[];
+  const tecnico=txt.match(/\bACWR\b|\bTSS\b|\bCTL\b|\bATL\b|\bmesociclos?\b|\bmicrociclos?\b|carga (?:aguda|crónica)|\bVO2\s?m[áa]x\b|umbral an?aer[óo]bico|\b80\/20\b|polarizad[oa]/gi)||[];
+  const u=[...new Set(tecnico.map(x=>x.toLowerCase()))];
+  if(u.length)av.push(`El plan usa vocabulario de entrenador: ${u.join(", ")}.`);
+  // nombres de microciclo usados como rótulo de semana
+  const rot=[...txt.matchAll(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\n]*\|([^|\n]*)$/gim)]
+    .map(m=>m[1].trim().toLowerCase())
+    .filter(x=>/^(ajuste|control|carga|choque|descarga|descargar|mantenimiento|adaptaci[óo]n|transici[óo]n)$/.test(x));
+  if(rot.length)av.push(`Hay ${rot.length} semana${rot.length>1?"s":""} rotulada${rot.length>1?"s":""} con el nombre técnico del microciclo (${[...new Set(rot)].join(", ")}) en vez de decir qué le pasa al socio.`);
+  const citas=txt.match(/\((?:[A-ZÁÉÍÓÚ][a-zá-ú]+(?:\s+y\s+cols\.?)?,?\s*)(?:19|20)\d\d\)/g)||[];
+  if(citas.length)av.push(`Hay citas bibliográficas dentro del plan: ${citas.slice(0,3).join(", ")}.`);
+  return av;
+}
+
 function auditarPlan(txt,ctx){
   const av=[];
   const n=contarSemanas(txt);
   if(ctx.semanas&&n&&n<ctx.semanas) av.push(`Salieron ${n} de las ${ctx.semanas} semanas pedidas.`);
   av.push(...auditarSumas(txt));
   av.push(...auditarRecursos(txt,ctx));
+  av.push(...auditarJergaDeProfe(txt));
   if(/^principiante/i.test(ctx.nivel||"")){
     const j=txt.match(/\bFTP\b|\bTSS\b|\bVO2\s?m[áa]x\b|%\s*FC\s?m[áa]x|\bZ[1-5]\b|\bvatios\b|\bumbral\b/gi)||[];
     const u=[...new Set(j.map(x=>x.toUpperCase()))];

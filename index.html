@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v16";
+const APP_VERSION="2026-10-21 · v17";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1473,6 +1473,20 @@ const REPERTORIO=`
 - Test: para medir y reajustar la carga.
 - Doble turno: dos sesiones el mismo día. Solo en semana de choque y con nivel para bancarlo.`;
 
+/* Cómo escalaba el club la misma sesión entre sus niveles A, B y C.
+   El nivel no cambia QUÉ se hace: cambia la dosis. */
+function escalaNivel(nivel){
+  return `
+📊 LA MISMA SESIÓN, DISTINTA DOSIS — nivel de este atleta: ${nivel}.
+El nivel NO cambia el tipo de trabajo ni la estructura de la semana. Entrada en calor y afloje son iguales para todos. Lo que cambia es la dosis, en este orden:
+1. Repeticiones: 6 × 500 m / 8 × 500 m / 10 × 500 m. Tres escaleras / cuatro / cinco. Tres vueltas al circuito / cuatro / cinco.
+2. Pausa: más corta a mayor nivel (1'30 → 1'). Subir la densidad sin tocar el volumen.
+3. Volumen de las continuas: 4 / 5 / 6 km. O 20' / 30' / 40'.
+4. Rótulo de intensidad: "algo duro" abajo, "duro" o "muy duro" arriba.
+5. En las series escalonadas se agrega un tramo más al final (1600+1000+600+1600, y arriba +1200), no un tipo de trabajo distinto.
+Referencia de volumen semanal del club: el nivel medio hace alrededor de 1,3 veces el del inicial, y el alto cerca de 1,5 veces.`;
+}
+
 const REGLA_DINAMISMO=`
 🔀 QUE NO PAREZCA UNA PLANILLA — cada regla tiene su fundamento:
 1. Cada día de la semana, un estímulo DISTINTO y con nombre propio. Nunca dos días seguidos del mismo tipo. La monotonía no es solo aburrida: se asocia a enfermedad y sobreentrenamiento.
@@ -1481,6 +1495,7 @@ const REGLA_DINAMISMO=`
 4. Dentro de un mismo tipo de sesión, cambiá la receta entre semanas: distancia de las series, pausa, terreno, sentido, orden de los bloques.
 5. ADHERENCIA — la mitad de los que empiezan abandonan en seis meses, y lo que predice que sigan es cómo la pasan durante la sesión. Cada 3 o 4 semanas poné algo que dé ganas de ir: una salida en grupo, una sesión en otro lugar, una larga sin reloj, un test para ver el progreso, o una carrera corta como objetivo intermedio. Ponele nombre.
 6. Una sesión fácil de verdad por semana. Y el día de descanso dice descanso, sin tarea.
+6b. El modelo del club tiene un día fijo de fuerza por semana, todas las semanas del año. Incluilo salvo que el atleta ya la cubra por su cuenta o que el lugar y el material no den; en ese caso, fuerza con el peso del cuerpo y lo que haya alrededor.
 7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Tener decidido de antemano qué hacer cuando algo sale mal es lo que evita que se pierda la semana entera.`;
 
 
@@ -1944,6 +1959,7 @@ ${bloqueContexto(ctx)}
 ${isCicl?MTB_BLOCK:""}
 ${ADHERENCIA_LIB}
 ${esPrinc?"":REPERTORIO}
+${esPrinc?"":escalaNivel(nivelAtl)}
 ${REGLA_DINAMISMO}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
@@ -2052,7 +2068,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     // Los bloques de bibliografía fundamentan el plan, pero una vez definida
     // la estrategia no hace falta repetirlos en cada tramo.
     let systemCont=systemPrompt;
-    [libBlock, esPrinc?"":REPERTORIO, ADHERENCIA_LIB].forEach(bl=>{
+    [libBlock, esPrinc?"":REPERTORIO, esPrinc?"":escalaNivel(nivelAtl), ADHERENCIA_LIB].forEach(bl=>{
       if(bl) systemCont=systemCont.split(bl).join("");
     });
     const plan0=planificarTramos(semN||1,dias,estTok(systemCont)+estTok(userPrompt)+500);

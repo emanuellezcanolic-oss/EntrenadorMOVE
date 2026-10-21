@@ -179,14 +179,27 @@ tenía:
   qué hacer si llueve, si no llega con el tiempo o si el cuerpo no da. **No hay
   que escribir "online"**: eso era del contexto 2020-2022.
 
-El repertorio no se manda a principiantes (`esPrinc`): para alguien que empieza,
+### Escala por nivel (los A/B/C de la planilla)
+
+`escalaNivel(nivel)`. En la planilla, A/B/C son **el mismo plan en tres dosis**,
+no tres planes. Medido sobre las 23 semanas: el nivel B hace **1,29×** el volumen
+semanal de A y el C **1,48×** (A promedia 36 km/sem, B 46, C 53).
+
+Lo que **no** cambia entre niveles: el tipo de sesión, la estructura de la
+semana, la entrada en calor y el afloje (los tres hacen 2 km de afloje).
+Lo que cambia, en este orden: repeticiones (6×500 / 8×500 / 10×500; 3×3
+escaleras / 3×4 / 3×5), pausa (1'30 → 1', o sea densidad), volumen de las
+continuas (4/5/6 km, o 20'/30'/40'), rótulo de intensidad ("algo duro" / "duro"
+/ "muy duro") y un tramo más al final de las series escalonadas.
+
+El repertorio y la escala no se mandan a principiantes (`esPrinc`): para alguien que empieza,
 la variedad de estímulos es ruido. La biblioteca de adherencia sí va siempre.
 
 **Las bibliotecas pesadas viajan solo en la primera llamada.** Sumarlas llevó el
 prompt de ~2800 a ~4265 tokens y duplicó las llamadas (un plan de 4 semanas
 volvió a necesitar dos, y uno de 12×6 pasó a doce). `generarPorTramos` recibe un
-`systemCont` sin `libBlock`, `REPERTORIO` ni `ADHERENCIA_LIB` para los tramos
-siguientes: ~3100 en vez de ~4265. Además `salidaQueEntra()` recorta el
+`systemCont` sin `libBlock`, `REPERTORIO`, `escalaNivel()` ni `ADHERENCIA_LIB`
+para los tramos siguientes: ~3100 en vez de ~4265. Además `salidaQueEntra()` recorta el
 `max_tokens` de cada llamada contra la entrada real, de modo que entrada +
 salida nunca pase `MARGEN_TPM`. Sin ese tope la primera llamada se iba a 8265.
 

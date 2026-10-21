@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v19";
+const APP_VERSION="2026-10-21 · v20";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1445,16 +1445,15 @@ const REGLA_COHERENCIA=`
    nombre propio y estímulo distinto, microciclos que no van siempre en el
    mismo orden, volumen que sube y baja, y eventos sociales metidos en el
    calendario para sostener la adherencia. */
-const ADHERENCIA_LIB=`BIBLIOTECA — VARIACIÓN Y ADHERENCIA (esto es TU fundamento como entrenador; NO nombres a estos autores dentro del plan):
-MONOTONÍA (Foster, 1998): la monotonía del entrenamiento —días todos parecidos, poca variación de carga dentro de la semana— se asocia a enfermedad y sobreentrenamiento. Variar día a día no es decoración: es parte del control de la carga.
-CARGA ONDULANTE (Rhea y cols., 2002, en fuerza): ondular la carga rinde más que subirla de forma lineal. Fuera de la fuerza hay que extrapolar con cuidado, pero el principio de alternar estímulos se sostiene.
-CARGA CONCENTRADA (Verkhoshansky; Issurin): la semana de choque concentra el estímulo y se paga con una descarga planificada. Sin esa descarga, el choque es solo fatiga acumulada.
-SALTOS DE CARGA (Gabbett, 2016; Nielsen, 2014): lo que lastima es el salto brusco, no el volumen alto en sí. Progresión con altibajos y descargas, no una rampa continua.
-ABANDONO (Dishman): cerca de la mitad de quienes empiezan un programa lo dejan en los primeros seis meses. Un plan que no se cumple no sirve por más correcto que esté.
-MOTIVACIÓN (Deci y Ryan; Teixeira y cols., 2012): la adherencia sostenida se apoya en autonomía (poder elegir), competencia (ver que progresás) y vínculo (entrenar con otros). Las alternativas, los tests y las salidas en grupo cubren esas tres.
-GRUPO (Burke y cols., 2006): entrenar acompañado mejora la adherencia frente a entrenar solo.
-DISFRUTE (Williams y cols., 2008; Rhodes y Kates, 2015): cómo se siente la persona DURANTE la sesión predice si va a seguir entrenando meses después. Una sesión que se disfruta vale más que una perfecta que se abandona.
-INTENCIONES DE IMPLEMENTACIÓN (Gollwitzer y Sheeran, 2006): dejar escrito de antemano "si pasa X, hago Y" aumenta mucho la probabilidad de cumplir. Por eso cada sesión difícil lleva su versión alternativa.`;
+const ADHERENCIA_LIB=`BIBLIOTECA — VARIACIÓN Y ADHERENCIA (fundamento tuyo; NO nombres a estos autores dentro del plan):
+Monotonía (Foster 1998): semanas sin variación de carga se asocian a enfermedad y sobreentrenamiento.
+Carga ondulante (Rhea 2002, en fuerza) y concentrada (Verkhoshansky; Issurin): alternar rinde más que subir lineal, y el choque se paga con descarga.
+Lesión (Gabbett 2016; Nielsen 2014): lastima el salto brusco, no el volumen alto.
+Abandono (Dishman): la mitad deja el programa en seis meses. Un plan que no se cumple no sirve.
+Motivación (Deci y Ryan; Teixeira 2012): autonomía, competencia y vínculo. Las alternativas, los tests y el grupo cubren las tres.
+Grupo (Burke 2006): acompañado se adhiere más que solo.
+Disfrute (Williams 2008; Rhodes y Kates 2015): cómo la pasa DURANTE la sesión predice si sigue meses después.
+Si-entonces (Gollwitzer y Sheeran 2006): dejar escrito "si pasa X, hago Y" aumenta el cumplimiento.`;
 
 const REPERTORIO=`
 🎛️ REPERTORIO DE SESIONES — cada día lleva NOMBRE y un estímulo distinto. Elegí del repertorio según lo que toque:
@@ -1488,15 +1487,15 @@ Referencia de volumen semanal del club: el nivel medio hace alrededor de 1,3 vec
 }
 
 const REGLA_DINAMISMO=`
-🔀 QUE NO PAREZCA UNA PLANILLA — cada regla tiene su fundamento:
-1. Cada día de la semana, un estímulo DISTINTO y con nombre propio. Nunca dos días seguidos del mismo tipo. La monotonía no es solo aburrida: se asocia a enfermedad y sobreentrenamiento.
-2. Los microciclos no van siempre en el mismo orden. Combiná Ajuste, Control, Carga, Choque, Descarga y Mantenimiento según lo que pida el bloque. El Choque concentra el estímulo y SIEMPRE se paga con la Descarga siguiente, que baja 20-25%.
-3. El volumen NO sube en escalones iguales: sube, se sostiene, baja y vuelve a subir. Lo que lastima es el salto brusco, no el volumen alto. Dos semanas seguidas con el mismo incremento es una planilla, no un plan.
-4. Dentro de un mismo tipo de sesión, cambiá la receta entre semanas: distancia de las series, pausa, terreno, sentido, orden de los bloques.
-5. ADHERENCIA — la mitad de los que empiezan abandonan en seis meses, y lo que predice que sigan es cómo la pasan durante la sesión. Cada 3 o 4 semanas poné algo que dé ganas de ir: una salida en grupo, una sesión en otro lugar, una larga sin reloj, un test para ver el progreso, o una carrera corta como objetivo intermedio. Ponele nombre.
-6. Una sesión fácil de verdad por semana. Y el día de descanso dice descanso, sin tarea.
-6b. El modelo del club tiene un día fijo de fuerza por semana, todas las semanas del año. Incluilo salvo que el atleta ya la cubra por su cuenta o que el lugar y el material no den; en ese caso, fuerza con el peso del cuerpo y lo que haya alrededor.
-7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Tener decidido de antemano qué hacer cuando algo sale mal es lo que evita que se pierda la semana entera.`;
+🔀 QUE NO PAREZCA UNA PLANILLA:
+1. Cada día, un estímulo distinto y con nombre propio. Nunca dos días seguidos del mismo tipo.
+2. Los microciclos no van siempre en el mismo orden. El choque es la semana pico y SIEMPRE lo sigue una descarga de 20-25% menos.
+3. El volumen no sube en escalones iguales: sube, se sostiene, baja y vuelve a subir.
+4. Dentro de un mismo tipo de sesión cambiá la receta entre semanas: distancia, pausa, terreno, sentido, orden de los bloques.
+5. Cada 3 o 4 semanas, algo que dé ganas de ir: salida en grupo, sesión en otro lugar, una larga sin reloj, un test, o una carrera corta como objetivo. Ponele nombre.
+6. Una sesión fácil de verdad por semana. El día de descanso, sin tarea.
+7. Un día fijo de fuerza por semana, salvo que el atleta ya la cubra o que el lugar y el material no den.
+8. En la sesión más dura y en la más larga, dejá la versión alternativa.`;
 
 
 /* Lo que sale de la app se lo entrega el profe AL SOCIO. Toda la
@@ -1514,40 +1513,29 @@ Si algo no le cambia lo que va a hacer mañana, no va.`;
    se le pide un formato estricto, línea por línea, y la app lo dibuja. Si el
    modelo se sale del formato, se cae al render de markdown de siempre. */
 const FORMATO_FICHA=`
-FORMATO DE SALIDA — respetalo EXACTAMENTE, línea por línea. No escribas nada fuera de este formato: ni introducción, ni comentarios, ni cierre.
+FORMATO DE SALIDA — respetalo línea por línea. No escribas nada fuera de él: ni introducción, ni comentarios, ni cierre.
 
 # BASES
-EC | paso 1 | paso 2 | paso 3 | paso 4
-AF | paso 1 | paso 2
-OJO | cuidado 1 | cuidado 2 | cuidado 3
+EC | paso | paso | paso
+AF | paso | paso
+OJO | cuidado | cuidado
 
-# SEMANA 1 | duración total de la semana | qué le pasa al socio esa semana, en palabras comunes
-DIA | A | duración del día | nombre de la sesión
+# SEMANA 1 | duración total | qué le pasa al socio esa semana, en palabras comunes
+DIA | A | duración | nombre de la sesión
 EC | minutos | la de siempre
-PR | minutos | el trabajo de ese día, en una sola línea
-NOTA | una acotación corta
-ALT | la versión alternativa, si llueve o no llega con el tiempo
+PR | minutos | el trabajo del día, en una línea
+NOTA | acotación corta
+ALT | la versión alternativa
 AF | minutos | el de siempre
-DIA | B | duración del día
-...
 
-CÓMO FUNCIONA:
-- BASES va una sola vez, al principio: la entrada en calor (EC), el afloje (AF) y los cuidados (OJO) que valen para todos los días.
-- Los días se llaman A, B, C en ese orden. Nunca lunes, martes ni miércoles.
-- Cada DIA lleva el NOMBRE de la sesión al final: Fraccionado, Cuestas, Fondo, Escaleras, Salida en grupo, Test…
-- ALT es opcional: va solo en la sesión más dura y en la más larga de cada semana.
-- EC + PR + AF tienen que sumar exactamente la duración del día. Sumá antes de escribir.
-- PR es UNA línea. Si hay varios bloques, separalos con el signo · en la misma línea.
-- NOTA es opcional, una línea, y solo donde aporte algo. No la pongas en todos los días.
-- Si ese día la entrada en calor cambia, describila en vez de poner "la de siempre".
-- Sin asteriscos, sin negritas, sin viñetas, sin tablas.
+REGLAS: BASES va una sola vez al principio (entrada en calor, afloje y cuidados comunes). Los días son A, B, C, nunca lunes ni martes. EC + PR + AF suman exacto la duración del día. PR es UNA línea; si hay varios bloques separalos con ·. NOTA y ALT son opcionales: ALT solo en la sesión más dura y en la más larga. Si la entrada en calor cambia ese día, describila en vez de "la de siempre". Sin asteriscos, negritas, viñetas ni tablas.
 
-EJEMPLO de un día bien escrito:
+EJEMPLO:
 DIA | B | 45' | Cuestas
 EC | 12' | la de siempre + 3 trotes de 20 m
-PR | 28' | 8 subidas de 45\" a ritmo fuerte, bajando trotando suave · 3' de trote entre la cuarta y la quinta
+PR | 28' | 8 subidas de 45" a ritmo fuerte, bajando trotando · 3' de trote entre la cuarta y la quinta
 NOTA | la octava tiene que salir como la primera; si la sexta ya se te cae, cortá ahí
-ALT | si llovió, 6 subidas en vez de 8 y evitá el pasto; si te quedan 30', hacés 5 y volvés
+ALT | si llovió, 6 subidas y evitá el pasto; si te quedan 30', hacés 5 y volvés
 AF | 5' | el de siempre`;
 
 /* Convierte el texto del modelo en una estructura. Devuelve null si no vino
@@ -1667,18 +1655,7 @@ const MTB_BLOCK=`
 
 /* Regla que impide que el modelo abrevie las semanas 2 en adelante. */
 const REGLA_COMPLETITUD=`
-⚠️ REGLA DE COMPLETITUD — ES LA REGLA MÁS IMPORTANTE DE TODAS:
-1. TODAS las semanas se escriben con EXACTAMENTE el mismo nivel de detalle que la Semana 1. La última semana se escribe tan completa como la primera.
-2. PROHIBIDO resumir, comprimir o abreviar las semanas 2 en adelante.
-3. PROHIBIDO escribir una sesión en una sola línea del tipo "LUNES – Rodaje fácil 50 min, 16 km, RPE 2". Eso es un error grave: esa sesión tiene que ocupar sus 4 bloques igual que en la Semana 1.
-4. PROHIBIDO escribir "ídem", "igual que la semana anterior", "misma estructura", "se repite", "como en la Semana 1", "análogo" o cualquier referencia cruzada para no escribir una sesión.
-5. CADA sesión de CADA semana lleva SIEMPRE sus 4 bloques escritos y completos:
-   **Entrada en calor:** duración + ejercicios de técnica concretos
-   **Parte principal:** series × distancia/tiempo + intensidad (zona/RPE/%) + pausa + foco técnico
-   **Vuelta a la calma:** afloje + estiramientos concretos
-   **Carga:** volumen | RPE | Zona
-6. Si el texto se está por cortar por longitud, NO abrevies para que entre: cortá donde estés y seguí en el mensaje siguiente, que se te va a pedir continuar.
-`;
+⚠️ TODAS las semanas van con el mismo detalle que la primera. Nada de "ídem", "igual que la semana anterior" ni remitir una sesión a otra: cada sesión se escribe entera. Si te quedás sin espacio, cortá donde estés y seguí en la respuesta siguiente; nunca abrevies para que entre.`;
 
 /* ── Generación larga con continuación automática ──────────────────────────
    Un plan de 12 semanas con TODAS las sesiones detalladas son ~20.000 tokens,
@@ -1766,14 +1743,14 @@ const estTok=t=>Math.ceil(String(t||"").length/3.4);
 function planificarTramos(semN,dias,tokEntrada){
   // Una sesión en formato ficha ocupa ~60 tokens. Con 90 hay 50% de margen y,
   // si aun así se corta, groqChat continúa: cuesta lo mismo que partir de más.
-  const porSem=Math.max(260,(+dias||4)*90);
+  const porSem=Math.max(220,(+dias||4)*60);
   const disponible=Math.max(900,MARGEN_TPM-tokEntrada);
   const maxSem=Math.max(1,Math.floor(disponible/porSem));
   const semPorTramo=Math.max(1,Math.min(semN,maxSem,12));
   return {semPorTramo,tramos:Math.ceil(semN/semPorTramo),porSem};
 }
 function salidaParaTramo(semanas,porSem,esPrimero){
-  return Math.min(TOPE_SALIDA,Math.ceil(semanas*porSem*1.4)+(esPrimero?500:0));
+  return Math.min(TOPE_SALIDA,Math.ceil(semanas*porSem*1.25)+(esPrimero?350:0));
 }
 /* El techo real lo pone el límite por minuto: pedir más de lo que entra
    garantiza un 429 y una espera. Se recorta contra la entrada real. */

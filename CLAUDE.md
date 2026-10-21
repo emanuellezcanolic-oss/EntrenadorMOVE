@@ -143,9 +143,17 @@ consume del mismo minuto y obliga a esperar.** Por eso conviene la llamada más
 grande que entre, no la más chica. Si tocás `MARGEN_TPM` o `TOPE_SALIDA`,
 verificá con un test que entrada + max_tokens siga debajo de 8000.
 
-Bajar el tamaño del prompt de entrada (hoy ~2800-3600 tokens) es lo que más
-aceleraría los planes largos: cada token de entrada que se recorta deja lugar
-para más semanas por llamada.
+**Techo del plan gratuito:** un plan de 8 semanas cuesta ~6500 tokens (3800 de
+entrada + 2750 reservados de salida) de los 8000 por minuto. O sea **un plan por
+minuto**: generar dos seguidos, o reintentar enseguida, espera sí o sí. No es un
+bug, es el tamaño del pedido contra la cuota. El Dev Tier de Groq lo saca.
+
+El prompt ya pasó por una compresión (4694 → 3778 de entrada) sin sacar reglas:
+se acortaron `ADHERENCIA_LIB`, `REGLA_DINAMISMO`, `REGLA_COMPLETITUD` y
+`FORMATO_FICHA`. Lo que queda grande es `RUN_LIB`/`CIC_LIB` (~560) y
+`FORMATO_FICHA` (~420). Ojo: **recortar la entrada no baja sola el total**, porque
+`salidaQueEntra()` expande la reserva para ocupar el hueco; hay que bajar también
+`porSem` y el multiplicador de `salidaParaTramo()`.
 
 ### Dinamismo (planificación 2022 del club) — con su evidencia
 

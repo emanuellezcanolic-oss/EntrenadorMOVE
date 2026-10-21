@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v18";
+const APP_VERSION="2026-10-21 · v19";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1704,9 +1704,10 @@ function esperaDe429(msg){
   const seg=m?Math.ceil(parseFloat(m[1]))+2:30;
   return Math.max(5,Math.min(95,seg));
 }
+let _avancePlan="";
 async function esperarConCuenta(seg,motivo){
   for(let s=seg;s>0;s--){
-    showLoading(`${motivo} ${s}s…`);
+    showLoading(`${_avancePlan?_avancePlan+" — ":""}${motivo} ${s}s…`);
     await new Promise(r=>setTimeout(r,1000));
   }
 }
@@ -1763,11 +1764,12 @@ const TOPE_SALIDA=4000;
 const estTok=t=>Math.ceil(String(t||"").length/3.4);
 
 function planificarTramos(semN,dias,tokEntrada){
-  // Una sesión en formato ficha ocupa ~60 tokens; 130 deja el doble de margen.
-  const porSem=Math.max(300,(+dias||4)*130);
+  // Una sesión en formato ficha ocupa ~60 tokens. Con 90 hay 50% de margen y,
+  // si aun así se corta, groqChat continúa: cuesta lo mismo que partir de más.
+  const porSem=Math.max(260,(+dias||4)*90);
   const disponible=Math.max(900,MARGEN_TPM-tokEntrada);
   const maxSem=Math.max(1,Math.floor(disponible/porSem));
-  const semPorTramo=Math.max(1,Math.min(semN,maxSem,6));
+  const semPorTramo=Math.max(1,Math.min(semN,maxSem,12));
   return {semPorTramo,tramos:Math.ceil(semN/semPorTramo),porSem};
 }
 function salidaParaTramo(semanas,porSem,esPrimero){
@@ -2077,6 +2079,7 @@ Redesenhá el plan desde el perfil actual del atleta hacia el nuevo objetivo. Ma
     const semN=parseInt(sem,10)||0;
     const prog=(acc,desde,hasta)=>{
       const n=Math.max(contarSemanas(acc),desde?desde-1:0);
+      _avancePlan=semN?`Semana ${Math.min(n||desde||1,semN)} de ${semN}`:"";
       showLoading(semN?`Escribiendo el plan... semana ${Math.min(n||desde||1,semN)} de ${semN} ⚡`:"Generando con IA científica... ⚡");
     };
     // Los bloques de bibliografía fundamentan el plan, pero una vez definida

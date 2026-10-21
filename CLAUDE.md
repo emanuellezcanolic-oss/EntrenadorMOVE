@@ -125,7 +125,10 @@ arreglo estaba publicado y el navegador servía HTML viejo.
   de 12 semanas.
 - `planificarTramos(semN,dias,tokEntrada)`: **el tamaño del tramo no es fijo.** Se
   calcula para meter la mayor cantidad de semanas que entren en una llamada sin
-  pasar `MARGEN_TPM`, estimando ~130 tokens por sesión (una sesión en formato ficha ocupa ~60; el resto es margen). `salidaParaTramo()` fija
+  pasar `MARGEN_TPM`, estimando ~90 tokens por sesión (una en formato ficha ocupa ~60).
+  **Ese número y el tope de semanas por tramo deciden cuántas llamadas se hacen,
+  y cada llamada extra cuesta una espera de ~45s.** Estuvo en 200 con tope de 6
+  semanas: un plan de 8×4 que entra holgado en una llamada se partía en dos. `salidaParaTramo()` fija
   el `max_tokens` de esa llamada en lugar de reservar un número fijo. Un plan de
   4 semanas × 3 días sale en **una** llamada sin esperas; uno de 12 × 6 en cuatro.
 - `pedirAGroq()`: reintenta ante un 429 esperando lo que el propio error indica,

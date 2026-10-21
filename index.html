@@ -246,6 +246,8 @@ tr:hover td{background:var(--s2)}
 .fet{width:118px;vertical-align:top;padding:6px 9px 6px 0;font-size:11px;color:var(--tx3);text-align:right;border-bottom:1px solid var(--b1);line-height:1.55;white-space:nowrap}
 .fco{vertical-align:top;padding:6px 0 6px 10px;border-bottom:1px solid var(--b1);border-left:2px solid var(--b1);line-height:1.55}
 .fnota{color:var(--tx3);font-style:italic}
+.fnom{display:inline-block;color:var(--grl);letter-spacing:1px;text-transform:uppercase;font-size:11px;margin-bottom:2px}
+.falt{color:var(--tx3);font-size:12px}
 @media print{
   .ficha{font-size:9pt;line-height:1.38;color:#000}
   .fbx{background:#f7faf6!important;border-color:#cfd8cd!important;padding:6px 9px}
@@ -258,6 +260,8 @@ tr:hover td{background:var(--s2)}
   .fet{color:#7a7a7a!important;font-size:8pt;width:104px}
   .fco{border-left:2px solid #e8efe6!important}
   .fnota{color:#777!important}
+  .fnom{color:#2d5a27!important;font-size:8pt}
+  .falt{color:#777!important;font-size:8.5pt}
   .ftab tr{page-break-inside:avoid}
 }
 .print-hdr{display:none}
@@ -1259,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-20 · v14";
+const APP_VERSION="2026-10-21 · v15";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1436,6 +1440,38 @@ const REGLA_COHERENCIA=`
 - Las distancias tienen que ser coherentes con la duración y con la velocidad real del deporte y del terreno: en montaña se avanza mucho más lento que en ruta, y en subida más lento todavía.
 - El porcentaje 80/20 que declarás tiene que coincidir con el tiempo que realmente asignaste a esfuerzo suave y a esfuerzo fuerte esa semana.`;
 
+/* Repertorio y reglas sacados de la planificación 2022 del club (22
+   microciclos en Excel). Lo que la hacía viva: cada día una sesión con
+   nombre propio y estímulo distinto, microciclos que no van siempre en el
+   mismo orden, volumen que sube y baja, y eventos sociales metidos en el
+   calendario para sostener la adherencia. */
+const REPERTORIO=`
+🎛️ REPERTORIO DE SESIONES — cada día lleva NOMBRE y un estímulo distinto. Elegí del repertorio según lo que toque:
+- Fraccionado: N × distancia fuerte con pausa definida (6 × 500 m, pausa 1'30).
+- Fraccionado en escaleras: N × M escaleras, subir rápido y bajar suave.
+- Fraccionado alternando sentido: las series cambian de dirección o de terreno.
+- Pasadas: repeticiones largas a ritmo controlado.
+- Cuestas: repeticiones en subida, la bajada es la pausa.
+- Continuo uniforme: ritmo parejo de punta a punta.
+- Continuo variable: alterna tramos (1' fuerte × 2' suave, o 600 m fuerte × 400 m suave).
+- Continuo progresivo: arranca suave y termina fuerte.
+- Continuo intensivo: sostenido y exigente, más corto que un fondo.
+- Continuo en circuito: vueltas a un circuito con subida dura y bajada suave.
+- Fondo: la salida larga, suave.
+- Circuito de fuerza, zona media, estabilidad, pliometría, saltabilidad, técnica de carrera.
+- Test: para medir y reajustar la carga.
+- Doble turno: dos sesiones el mismo día. Solo en semana de choque y con nivel para bancarlo.`;
+
+const REGLA_DINAMISMO=`
+🔀 QUE NO PAREZCA UNA PLANILLA:
+1. Cada día de la semana tiene un estímulo DISTINTO y su nombre propio. Nunca dos días seguidos del mismo tipo.
+2. Los microciclos no van siempre en el mismo orden. Combiná Ajuste, Control, Carga, Choque, Descarga y Mantenimiento según lo que pida el bloque. El Choque es la semana pico; la Descarga baja 20-25%.
+3. El volumen NO sube en escalones iguales. Puede subir, sostenerse, bajar y volver a subir. Dos semanas seguidas con el mismo incremento es una planilla, no un plan.
+4. Dentro de un mismo tipo de sesión, cambiá la receta entre semanas: la distancia de las series, la pausa, el terreno, el sentido, el orden de los bloques.
+5. ADHERENCIA — cada 3 o 4 semanas meté algo que dé ganas de ir: una salida en grupo, una sesión en un lugar distinto, una salida larga sin reloj, un test para ver cómo viene, o una carrera corta como objetivo intermedio. Ponele nombre en el plan.
+6. Una sesión fácil de verdad por semana. Y el día de descanso dice descanso, sin tarea.
+7. En la sesión más dura y en la más larga dejá escrita la versión alternativa: qué hace si llueve, si no llega con el tiempo o si el cuerpo no da. Así no se pierde la semana.`;
+
 /* ─────── FORMATO DE FICHA ───────
    La estructura del plan no se deja librada a cómo el modelo decida escribir:
    se le pide un formato estricto, línea por línea, y la app lo dibuja. Si el
@@ -1449,10 +1485,11 @@ AF | paso 1 | paso 2
 OJO | cuidado 1 | cuidado 2 | cuidado 3
 
 # SEMANA 1 | duración total de la semana | dos palabras que la definan
-DIA | A | duración del día
+DIA | A | duración del día | nombre de la sesión
 EC | minutos | la de siempre
 PR | minutos | el trabajo de ese día, en una sola línea
 NOTA | una acotación corta
+ALT | la versión alternativa, si llueve o no llega con el tiempo
 AF | minutos | el de siempre
 DIA | B | duración del día
 ...
@@ -1460,6 +1497,8 @@ DIA | B | duración del día
 CÓMO FUNCIONA:
 - BASES va una sola vez, al principio: la entrada en calor (EC), el afloje (AF) y los cuidados (OJO) que valen para todos los días.
 - Los días se llaman A, B, C en ese orden. Nunca lunes, martes ni miércoles.
+- Cada DIA lleva el NOMBRE de la sesión al final: Fraccionado, Cuestas, Fondo, Escaleras, Salida en grupo, Test…
+- ALT es opcional: va solo en la sesión más dura y en la más larga de cada semana.
 - EC + PR + AF tienen que sumar exactamente la duración del día. Sumá antes de escribir.
 - PR es UNA línea. Si hay varios bloques, separalos con el signo · en la misma línea.
 - NOTA es opcional, una línea, y solo donde aporte algo. No la pongas en todos los días.
@@ -1467,10 +1506,11 @@ CÓMO FUNCIONA:
 - Sin asteriscos, sin negritas, sin viñetas, sin tablas.
 
 EJEMPLO de un día bien escrito:
-DIA | B | 30'
-EC | 10' | la de siempre
-PR | 15' | 12' de trote suave + 6 aceleraciones de 20 m, volviendo caminando
-NOTA | las aceleraciones no son piques al máximo: subís el ritmo y aflojás
+DIA | B | 45' | Cuestas
+EC | 12' | la de siempre + 3 trotes de 20 m
+PR | 28' | 8 subidas de 45\" a ritmo fuerte, bajando trotando suave · 3' de trote entre la cuarta y la quinta
+NOTA | la octava tiene que salir como la primera; si la sexta ya se te cae, cortá ahí
+ALT | si llovió, 6 subidas en vez de 8 y evitá el pasto; si te quedan 30', hacés 5 y volvés
 AF | 5' | el de siempre`;
 
 /* Convierte el texto del modelo en una estructura. Devuelve null si no vino
@@ -1485,12 +1525,13 @@ function parsearFicha(txt){
     if(/^#{1,3}\s*BASES/i.test(l)){ sem=null; dia=null; return; }
     const c=l.split("|").map(x=>x.trim());
     const tag=(c[0]||"").toUpperCase().replace("Í","I");
-    if(tag==="DIA"&&sem){ dia={letra:c[1]||"",total:c[2]||"",ec:null,pr:[],nota:"",af:null}; sem.dias.push(dia); return; }
+    if(tag==="DIA"&&sem){ dia={letra:c[1]||"",total:c[2]||"",nombre:c[3]||"",ec:null,pr:[],nota:"",alt:"",af:null}; sem.dias.push(dia); return; }
     if(tag==="EC"){ dia?dia.ec={min:c[1]||"",txt:c.slice(2).join(" · ")}:out.bases.ec=c.slice(1).filter(Boolean); return; }
     if(tag==="AF"){ dia?dia.af={min:c[1]||"",txt:c.slice(2).join(" · ")}:out.bases.af=c.slice(1).filter(Boolean); return; }
     if(tag==="OJO"&&!dia){ out.bases.ojo=c.slice(1).filter(Boolean); return; }
     if(tag==="PR"&&dia){ dia.pr.push({min:c[1]||"",txt:c.slice(2).join(" · ")}); return; }
     if(tag==="NOTA"&&dia){ dia.nota=c.slice(1).join(" "); return; }
+    if(tag==="ALT"&&dia){ dia.alt=c.slice(1).join(" "); return; }
   });
   const dias=out.semanas.reduce((n,s)=>n+s.dias.length,0);
   return (out.semanas.length&&dias)?out:null;
@@ -1512,9 +1553,10 @@ function renderFicha(f){
       if(d.ec){et.push("Entrada en calor "+esc(d.ec.min));co.push(esc(d.ec.txt))}
       d.pr.forEach(x=>{et.push("Principal "+esc(x.min));co.push("<b>"+esc(x.txt)+"</b>")});
       if(d.nota)co[co.length-1]=(co[co.length-1]||"")+' <span class="fnota">— '+esc(d.nota)+"</span>";
+      if(d.alt){et.push("Si no se puede");co.push('<span class="falt">'+esc(d.alt)+"</span>")}
       if(d.af){et.push("Afloje "+esc(d.af.min));co.push(esc(d.af.txt))}
       return `<tr><th>Día ${esc(d.letra)}<i>${esc(d.total)}</i></th>
-        <td class="fet">${et.join("<br>")}</td><td class="fco">${co.join("<br>")}</td></tr>`;
+        <td class="fet">${et.join("<br>")}</td><td class="fco">${d.nombre?'<b class="fnom">'+esc(d.nombre)+"</b><br>":""}${co.join("<br>")}</td></tr>`;
     }).join("");
     const der=[s.total,s.etiqueta].filter(Boolean).join(" · ");
     return `<tr class="fwk"><td colspan="3">SEMANA ${s.n}${der?'<span>'+esc(der)+'</span>':''}</td></tr>`+filas;
@@ -1855,6 +1897,7 @@ ${FORMATO_FICHA}
 ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
+${REGLA_DINAMISMO}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}` 
@@ -1879,6 +1922,8 @@ ${bloqueNivel(nivelAtl)}
 ${bloqueMix(dep_clean,dep2)}
 ${bloqueContexto(ctx)}
 ${isCicl?MTB_BLOCK:""}
+${esPrinc?"":REPERTORIO}
+${REGLA_DINAMISMO}
 ${reglaEspanol(isCicl,isField,dep_clean)}
 ${REGLA_COHERENCIA}
 ${REGLA_COMPLETITUD}`;

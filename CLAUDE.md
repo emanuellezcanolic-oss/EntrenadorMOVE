@@ -144,6 +144,33 @@ Bajar el tamaño del prompt de entrada (hoy ~2800-3600 tokens) es lo que más
 aceleraría los planes largos: cada token de entrada que se recorta deja lugar
 para más semanas por llamada.
 
+### Dinamismo (planificación 2022 del club)
+
+`REPERTORIO` y `REGLA_DINAMISMO` salen de la planilla real de 2022 del club
+(22 microciclos, niveles A/B/C en paralelo). Lo que la hacía viva y el prompt no
+tenía:
+
+- **Cada día una sesión con NOMBRE y un estímulo distinto**: Fraccionado,
+  Fraccionado en escaleras, Fraccionado alternando sentido, Pasadas, Cuestas,
+  Continuo uniforme / variable / progresivo / intensivo / en circuito, Fondo,
+  circuito de fuerza, zona media, estabilidad, pliometría, saltabilidad, técnica,
+  Test, Doble turno. No "trote 40 min" doce veces.
+- **Seis tipos de microciclo, en orden variable**: Ajuste, Control, Carga,
+  **Choque** (la semana pico), Descarga, Mantenimiento. En la planilla la
+  secuencia cambia entre mesociclos; no es siempre Ajuste→Control→Carga→Descarga.
+- **Volumen no lineal**: en la planilla va 38/38/40/31, 32/36/40/32, 36/0/34/31.
+  Sube, se sostiene, baja y vuelve a subir.
+- **Adherencia**: la planilla tiene salida grupal, fondo grupal, cena grupal,
+  activación con el equipo y carreras (Turmalina, Valholl) metidas en el
+  calendario. Cada 3-4 semanas algo que dé ganas de ir.
+- **Versión alternativa por sesión**: en la planilla era "Parte Principal
+  (Presencial)" vs "(Online)", por la pandemia. Generalizado a la línea `ALT`:
+  qué hacer si llueve, si no llega con el tiempo o si el cuerpo no da. **No hay
+  que escribir "online"**: eso era del contexto 2020-2022.
+
+El repertorio no se manda a principiantes (`esPrinc`): para alguien que empieza,
+la variedad de estímulos es ruido.
+
 ### Formato de ficha
 
 El plan ya no se renderiza desde markdown libre. Al modelo se le pide un formato
@@ -153,10 +180,11 @@ estricto, línea por línea (`FORMATO_FICHA`), y la app lo dibuja:
 # BASES
 EC | paso | paso | paso          AF | paso | paso          OJO | cuidado | cuidado
 # SEMANA 1 | 1 h 40 | reconocer
-DIA | A | 30'
+DIA | A | 30' | Fraccionado
 EC | 10' | la de siempre
 PR | 15' | 15' de trote suave continuo
 NOTA | ritmo de poder hablar de corrido
+ALT | si llovió, 4 series en vez de 6
 AF | 5' | el de siempre
 ```
 

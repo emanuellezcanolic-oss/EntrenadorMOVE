@@ -131,8 +131,15 @@ arreglo estaba publicado y el navegador servía HTML viejo.
   semanas: un plan de 8×4 que entra holgado en una llamada se partía en dos. `salidaParaTramo()` fija
   el `max_tokens` de esa llamada en lugar de reservar un número fijo. Un plan de
   4 semanas × 3 días sale en **una** llamada sin esperas; uno de 12 × 6 en cuatro.
-- `pedirAGroq()`: reintenta ante un 429 esperando lo que el propio error indica,
-  con la cuenta regresiva a la vista. Hasta `GROQ_MAX_429 = 4` veces.
+- `pedirAGroq()`: **lleva la cuenta de lo consumido en los últimos 60s** y espera
+  ANTES de hacer una llamada que no entra, en vez de comerse un 429. Si igual
+  llega el 429, lee del mensaje el estado real (`Limit X, Used Y, Requested Z`),
+  corrige su contador y lo muestra. Hasta `GROQ_MAX_429 = 4` reintentos.
+  `corregirGasto()` reemplaza la reserva estimada por el `usage.total_tokens`
+  real de la respuesta: Groq admite según lo reservado pero consume lo usado, y
+  contar la reserva hacía esperar de más.
+  **Ojo con el orden de declaración:** `_limiteReal` no puede inicializarse con
+  `GROQ_TPM`, que se define más abajo; el TDZ rompe el script entero al cargar.
 
 **El límite que manda es TPM, no el total.** El plan gratuito de Groq
 (`on_demand`) da **8000 tokens por minuto**, y cuenta entrada + `max_tokens`

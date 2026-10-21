@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-21 · v20";
+const APP_VERSION="2026-10-21 · v21";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1676,6 +1676,42 @@ function contarSemanas(t){return (String(t).match(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA
    esperamos ese tiempo con la cuenta a la vista y reintentamos. */
 const GROQ_MAX_429=4;
 
+/* Groq limita por minuto y nosotros estábamos adivinando cuánto quedaba.
+   Ahora la app lleva su propia cuenta de lo consumido en los últimos 60s y,
+   si el pedido no entra, espera ANTES de hacer una llamada condenada al 429.
+   El 429 además trae el estado real de la cuenta: se lee y se muestra. */
+let _gasto=[];               // [{t, tok}] de los últimos 60 segundos
+let _limiteReal=8000;        // lo que Groq diga que permite la cuenta (GROQ_TPM se define más abajo)
+
+function registrarGasto(tok){ const e={t:Date.now(),tok}; _gasto.push(e); return e; }
+/* Groq admite según lo reservado, pero lo que consume es lo que realmente usó.
+   Corregir con el dato real evita esperas que no hacen falta. */
+function corregirGasto(entrada,usoReal){ if(entrada&&usoReal>0) entrada.tok=usoReal; }
+function gastoUltimoMinuto(){
+  const corte=Date.now()-60000;
+  _gasto=_gasto.filter(x=>x.t>corte);
+  return _gasto.reduce((a,x)=>a+x.tok,0);
+}
+function segundosHastaQueEntre(necesita){
+  const corte=Date.now()-60000;
+  _gasto=_gasto.filter(x=>x.t>corte);
+  let acum=_gasto.reduce((a,x)=>a+x.tok,0);
+  if(acum+necesita<=_limiteReal) return 0;
+  // esperar a que caduquen los gastos más viejos hasta que entre
+  for(const g of _gasto){
+    acum-=g.tok;
+    if(acum+necesita<=_limiteReal)
+      return Math.max(1,Math.ceil((g.t+60000-Date.now())/1000)+1);
+  }
+  return 5;
+}
+function leerLimites(msg){
+  const m=/Limit\s+(\d+),\s*Used\s+(\d+),\s*Requested\s+(\d+)/i.exec(msg||"");
+  if(!m) return null;
+  _limiteReal=+m[1];
+  return {limite:+m[1],usado:+m[2],pedido:+m[3]};
+}
+
 function esperaDe429(msg){
   const m=/try again in ([\d.]+)\s*s/i.exec(msg||"");
   const seg=m?Math.ceil(parseFloat(m[1]))+2:30;
@@ -1690,15 +1726,30 @@ async function esperarConCuenta(seg,motivo){
 }
 async function pedirAGroq(key,msgs,maxTok){
   for(let r=0;;r++){
+    const necesita=estTok(msgs.map(m=>m.content).join(""))+(maxTok||GROQ_MAX_TOKENS);
+    const esperar=segundosHastaQueEntre(necesita);
+    if(esperar>0) await esperarConCuenta(esperar,`Esperando el cupo de Groq (usaste ${gastoUltimoMinuto()} de ${_limiteReal} en este minuto).`);
+    const _reg=registrarGasto(necesita);
     const res=await fetch(GROQ_URL,{
       method:"POST",
       headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
       body:JSON.stringify({model:getGroqModel(),max_tokens:maxTok||GROQ_MAX_TOKENS,temperature:0.3,messages:msgs})
     });
+    if(res.ok){
+      try{
+        const copia=await res.clone().json();
+        if(copia&&copia.usage&&copia.usage.total_tokens) corregirGasto(_reg,copia.usage.total_tokens);
+      }catch{}
+    }
     if(res.status!==429||r>=GROQ_MAX_429)return res;
     let d={};try{d=await res.clone().json()}catch{}
+    const info=leerLimites(d&&d.error&&d.error.message);
+    if(info){ // el rechazo no consumió: corregimos nuestra cuenta con la real
+      _gasto=[{t:Date.now(),tok:info.usado}];
+    }
     await esperarConCuenta(esperaDe429(d&&d.error&&d.error.message),
-      "Groq llegó a su límite por minuto. Sigo en");
+      info?`Groq: usaste ${info.usado} de ${info.limite} tokens este minuto. Sigo en`
+          :"Groq llegó a su límite por minuto. Sigo en");
   }
 }
 

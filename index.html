@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-22 · v23";
+const APP_VERSION="2026-10-22 · v24";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -1501,6 +1501,21 @@ const REGLA_DINAMISMO=`
 /* Lo que sale de la app se lo entrega el profe AL SOCIO. Toda la
    nomenclatura de planificación (microciclos, ACWR, mesociclos, zonas) es
    andamiaje del entrenador: sirve para construir el plan, no va adentro. */
+/* El modelo no sabe la fecha y proponía alternativas "por si hay hielo" en
+   plena primavera. Se le pasa el mes y la estación del hemisferio sur. */
+function bloqueEpoca(){
+  const m=new Date().getMonth();
+  const meses=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const est=(m<=1||m===11)?"verano":m<=4?"otoño":m<=7?"invierno":"primavera";
+  const clima={verano:"calor; el riesgo es el golpe de calor, no el frío",
+               otoño:"temperaturas suaves y días más cortos",
+               invierno:"frío y, en zona de montaña, posible nieve o piso helado",
+               primavera:"temperaturas suaves, días más largos, puede haber viento o barro después de la lluvia"}[est];
+  return `
+📅 ÉPOCA: estamos en ${meses[m]}, ${est} en Argentina (hemisferio sur): ${clima}.
+Cualquier referencia al clima o al terreno tiene que corresponder a esta época. No propongas alternativas por nieve o hielo fuera del invierno.`;
+}
+
 const REGLA_DESTINATARIO=`
 👤 ESTE DOCUMENTO SE LO DAN AL SOCIO, no es la planilla del entrenador. Él necesita saber qué hace cada día, cuánto dura y cómo tiene que sentirse.
 La nomenclatura de planificación es andamiaje tuyo y adentro del plan NO aparece: microciclo, mesociclo, ajuste, control, carga, choque, descarga, ACWR, TSS, umbral, VO2, porcentajes de distribución, autores ni citas.
@@ -1528,6 +1543,7 @@ NOTA | acotación corta
 ALT | la versión alternativa
 AF | minutos | el de siempre
 
+ALT es la versión reducida de ESA sesión: menos series, menos tiempo, u otra superficie donde hacer el mismo trabajo. No son consejos generales ni advertencias de seguridad: nada de llevar agua, avisar a dónde vas, hidratarte, abrigarte ni usar protector. Si no tenés una alternativa de entrenamiento concreta, no pongas la línea.
 REGLAS: BASES va una sola vez al principio (entrada en calor, afloje y cuidados comunes). Los días son A, B, C, nunca lunes ni martes. EC + PR + AF suman exacto la duración del día. PR es UNA línea; si hay varios bloques separalos con ·. NOTA y ALT son opcionales: ALT solo en la sesión más dura y en la más larga. Si la entrada en calor cambia ese día, describila en vez de "la de siempre". Sin asteriscos, negritas, viñetas ni tablas.
 
 EJEMPLO:
@@ -1911,6 +1927,7 @@ async function generarPlan(modo){
   const systemPrompt = isField ? `Sos el preparador físico del club The Move Club (Argentina). Generás planes para DEPORTES DE CAMPO (fútbol, básquet, hockey, etc.). Solo el plan, sin introducciones.
 
 ${REGLA_DESTINATARIO}
+${bloqueEpoca()}
 
 ⚠️ REGLA ABSOLUTA: Este es un deporte de campo, NO running. PROHIBIDO generar series de 1000m, 2000m, ni rodajes continuos como método principal. El trabajo aeróbico se hace con pelota o en circuitos intermitentes.
 
@@ -1954,6 +1971,7 @@ ${REGLA_COMPLETITUD}`
 : `Sos el Head Coach de The Move Club (Argentina). Solo el plan, sin introducciones.
 REGLA: No inventás datos. Todo basado en ciencia validada.
 ${REGLA_DESTINATARIO}
+${bloqueEpoca()}
 
 RESISTENCIA: Daniels (VDOT/zonas), Seiler (80/20 polarizado), Pfitzinger (volumen), Koop (trail), Friel (TSS/CTL), House-Johnston (Uphill Athlete), Gabbett (ACWR 0.8-1.3).
 PERIODIZACIÓN: Microciclos Ajuste→Control→Carga→Descarga (3:1). Z1=suave Z2=ligero Z3=algo duro Z4=duro Z5=máximo. Si no hay VAM/FTP: rangos por nivel, nunca inventar valores.
@@ -2412,6 +2430,20 @@ function auditarRecursos(txt,ctx){
 
 /* El plan es para el socio: la nomenclatura de planificación no va adentro.
    Pedirlo por prompt no alcanza, así que se verifica. */
+/* Las alternativas tienen que ser de entrenamiento, no consejos de vida. */
+function auditarRelleno(txt){
+  const av=[];
+  const f=txt.match(/llev[áa] agua|hidrat[áa]te|avis[áa] (?:por dónde|a dónde|a alguien)|abrig[áa]te|protector solar|us[áa] gorra|cargá el celular/gi)||[];
+  if(f.length)av.push(`Hay consejos de relleno en vez de alternativas de entrenamiento: ${[...new Set(f.map(x=>x.toLowerCase()))].join(", ")}.`);
+  const mes=new Date().getMonth();
+  const invierno=(mes>=5&&mes<=7);
+  if(!invierno){
+    const h=txt.match(/\bhielo\b|\bnieve\b|\bhelad[ao]\b|\bescarcha\b/gi)||[];
+    if(h.length)av.push(`El plan menciona ${[...new Set(h.map(x=>x.toLowerCase()))].join(", ")} y no estamos en invierno.`);
+  }
+  return av;
+}
+
 function auditarJergaDeProfe(txt){
   const av=[];
   const tecnico=txt.match(/\bACWR\b|\bTSS\b|\bCTL\b|\bATL\b|\bmesociclos?\b|\bmicrociclos?\b|carga (?:aguda|crónica)|\bVO2\s?m[áa]x\b|umbral an?aer[óo]bico|\b80\/20\b|polarizad[oa]/gi)||[];
@@ -2435,6 +2467,7 @@ function auditarPlan(txt,ctx){
   av.push(...auditarSumasFicha(parsearFicha(txt)));
   av.push(...auditarRecursos(txt,ctx));
   av.push(...auditarJergaDeProfe(txt));
+  av.push(...auditarRelleno(txt));
   if(/^principiante/i.test(ctx.nivel||"")){
     const j=txt.match(/\bFTP\b|\bTSS\b|\bVO2\s?m[áa]x\b|%\s*FC\s?m[áa]x|\bZ[1-5]\b|\bvatios\b|\bumbral\b/gi)||[];
     const u=[...new Set(j.map(x=>x.toUpperCase()))];

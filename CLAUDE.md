@@ -131,15 +131,18 @@ arreglo estaba publicado y el navegador servía HTML viejo.
   semanas: un plan de 8×4 que entra holgado en una llamada se partía en dos. `salidaParaTramo()` fija
   el `max_tokens` de esa llamada en lugar de reservar un número fijo. Un plan de
   4 semanas × 3 días sale en **una** llamada sin esperas; uno de 12 × 6 en cuatro.
-- `pedirAGroq()`: **lleva la cuenta de lo consumido en los últimos 60s** y espera
-  ANTES de hacer una llamada que no entra, en vez de comerse un 429. Si igual
-  llega el 429, lee del mensaje el estado real (`Limit X, Used Y, Requested Z`),
-  corrige su contador y lo muestra. Hasta `GROQ_MAX_429 = 4` reintentos.
-  `corregirGasto()` reemplaza la reserva estimada por el `usage.total_tokens`
-  real de la respuesta: Groq admite según lo reservado pero consume lo usado, y
-  contar la reserva hacía esperar de más.
-  **Ojo con el orden de declaración:** `_limiteReal` no puede inicializarse con
-  `GROQ_TPM`, que se define más abajo; el TDZ rompe el script entero al cargar.
+- `pedirAGroq()`: ante un 429 lee del mensaje el estado real
+  (`Limit X, Used Y, Requested Z`) y espera lo que el propio error indica, hasta
+  `GROQ_MAX_429 = 4` reintentos **o** `ESPERA_MAX_MS` (2 min 30) de espera
+  acumulada, lo que pase primero. Ese tope existe para que siempre le devuelva el
+  control al profesor.
+
+  **No intentes llevar un contador propio del cupo.** Se probó: la app registraba
+  lo que iba a consumir antes de cada llamada y esperaba si no entraba. Cada
+  reintento volvía a sumar al registro, el registro crecía solo y la espera se
+  alargaba sola: quedaba dando vueltas varios minutos mostrando un número
+  inventado ("usaste 5981 de 8000") que no era el de Groq. El único dato
+  confiable es el que viene en el 429.
 
 **El límite que manda es TPM, no el total.** El plan gratuito de Groq
 (`on_demand`) da **8000 tokens por minuto**, y cuenta entrada + `max_tokens`

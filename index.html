@@ -1263,7 +1263,7 @@ function loadAtlData(){
 // No reproduce texto de los libros; resume principios para fundamentar los planes.
 /* Se sube en cada publicación. Sirve para saber de un vistazo si el navegador
    está mostrando una versión vieja cacheada en vez de la recién publicada. */
-const APP_VERSION="2026-10-22 · v22";
+const APP_VERSION="2026-10-22 · v23";
 document.addEventListener("DOMContentLoaded",()=>{
   const e=document.getElementById("appVer");
   if(e)e.textContent="v "+APP_VERSION;
@@ -2348,6 +2348,25 @@ function corregirAnglicismos(t){
 }
 
 /* Compara el volumen declarado de cada semana contra la suma de sus sesiones. */
+/* En formato ficha el total va en el encabezado (# SEMANA 1 | 33 km | ...) y
+   el de cada día en su línea DIA. El auditor viejo buscaba "Volumen:" y por eso
+   dejó de controlar las sumas al cambiar de formato. */
+function auditarSumasFicha(f){
+  const av=[];
+  if(!f) return av;
+  const num=t=>{const m=/(\d+(?:[.,]\d+)?)\s*(km|k)\b/i.exec(String(t||""));return m?parseFloat(m[1].replace(",",".")):null};
+  f.semanas.forEach(sem=>{
+    const dec=num(sem.total);
+    if(dec===null)return;
+    const dias=sem.dias.map(d=>num(d.total)).filter(v=>v!==null);
+    if(dias.length<2)return;
+    const suma=dias.reduce((a,b)=>a+b,0);
+    if(Math.abs(suma-dec)/Math.max(suma,1)>0.1)
+      av.push(`Semana ${sem.n}: declara ${dec} km y los días suman ${Math.round(suma*10)/10} km.`);
+  });
+  return av;
+}
+
 function auditarSumas(txt){
   const av=[], part=txt.split(/^[^\S\n]*#{0,3}[^\S\n]*SEMANA[^\S\n]+(\d+)/gim);
   for(let i=1;i<part.length;i+=2){
@@ -2413,6 +2432,7 @@ function auditarPlan(txt,ctx){
   const n=contarSemanas(txt);
   if(ctx.semanas&&n&&n<ctx.semanas) av.push(`Salieron ${n} de las ${ctx.semanas} semanas pedidas.`);
   av.push(...auditarSumas(txt));
+  av.push(...auditarSumasFicha(parsearFicha(txt)));
   av.push(...auditarRecursos(txt,ctx));
   av.push(...auditarJergaDeProfe(txt));
   if(/^principiante/i.test(ctx.nivel||"")){
